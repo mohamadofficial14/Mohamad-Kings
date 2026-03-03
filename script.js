@@ -62,3 +62,20 @@ gameState[0] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '�
 gameState[1] = Array(10).fill('🛡️');
 
 drawBoard(gameState);
+
+function checkIfExposed(playerColor) {
+    const kingEmoji = '👑';
+    // 1. Find the King's location on the 10x10 grid
+    // 2. Check all vertical, horizontal, and diagonal lines
+    // 3. If an enemy piece is 'looking' at the King...
+    
+    showExposedAlert(); // Trigger the "Move or Fallmate" UI!
+}
+
+function showExposedAlert() {
+    const status = document.getElementById('status');
+    status.innerText = "⚠️ EXPOSED! (مكشوف) - Move or Fallmate!! 👑";
+    status.style.color = "red";
+    status.style.fontWeight = "bold";
+    // Optional: add a vibration or sound here!
+}
