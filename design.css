@@ -34,4 +34,24 @@ body {
 
 .orange-piece { background-color: #FF8C00; border: 2px solid white; }
 .brown-piece { background-color: #5D4037; border: 2px solid #ccc; }
+
+.square {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem; /* Big emojis! */
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Make the King stand out (Tall and Majestic) */
+.square:contains('👑') {
+  font-size: 3rem;
+  margin-top: -10px; /* Makes him look taller */
+}
+
+/* Style for the piece "team" colors */
+.orange-piece { color: #000; text-shadow: 0 0 5px #FF8C00; }
+.brown-piece { color: #000; text-shadow: 0 0 5px #5D4037; }
+
  
