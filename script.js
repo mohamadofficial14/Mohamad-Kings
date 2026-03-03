@@ -1,5 +1,9 @@
 let selectedSquare = null;
-let currentTurn = 'orange'; // Orange starts! 👑
+let currentTurn = 'orange'; // Orange starts the invasion! 👑
+
+// 1. UNIQUE PIECES FOR BOTH SIDES
+const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
+const brownTeam  = ['🤴', '💂', '🏰', '🚙', '🦄', '🏇', '💠']; 
 
 function drawBoard(currentBoardState) {
   const boardElement = document.getElementById('game-board');
@@ -24,53 +28,69 @@ function drawBoard(currentBoardState) {
 function handleSquareClick(row, col) {
   const piece = gameState[row][col];
   
-  // 1. SELECT PIECE
+  // SELECT PIECE
   if (!selectedSquare) {
     if (piece === ' ') return;
     
-    // Turn Enforcement
-    const isOrangePiece = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'].includes(piece); 
-    if (currentTurn === 'orange' && !isOrangePiece) return;
-    if (currentTurn === 'brown' && isOrangePiece) return;
+    // Check if it's the correct turn and correct team piece
+    if (currentTurn === 'orange' && !orangeTeam.includes(piece)) return;
+    if (currentTurn === 'brown' && !brownTeam.includes(piece)) return;
 
     selectedSquare = { row, col };
     drawBoard(gameState);
   } 
-  // 2. MOVE PIECE
+  // MOVE PIECE
   else {
     const fromRow = selectedSquare.row;
     const fromCol = selectedSquare.col;
     const movingPiece = gameState[fromRow][fromCol];
 
-    // Fallmate Logic!
-    if (gameState[row][col] === '👑') {
+    // THE ANTI-TELEPORT RULE (Soldiers can only move 2 steps max)
+    const dist = Math.abs(row - fromRow);
+    if ((movingPiece === '🛡️' || movingPiece === '💂') && dist > 2) {
+       alert("Soldiers can't teleport! They need a Horse for that! 🛑");
+       selectedSquare = null;
+       drawBoard(gameState);
+       return;
+    }
+
+    // FALLMATE LOGIC (Check if landing on a King)
+    if (piece === '👑' || piece === '🤴') {
        alert("FALLMATE! موت الملك! Mohamad Kings Victory! 👑🏆");
     }
 
-    // Mounting Logic
-    if (movingPiece === '🛡️' && gameState[row][col] === '🐎') {
+    // HORSE MOUNTING 🐎
+    if ((movingPiece === '🛡️' || movingPiece === '💂') && (piece === '🐎' || piece === '🦄')) {
        gameState[row][col] = '🏇';
-    } else {
+    } 
+    // VICE PRESIDENT PROMOTION (Shawarma Time! 🌯)
+    else if (movingPiece === '🛡️' && row === 0) {
+       alert("He ate too many Shawarmas! 🌯 He's the Vice President now! 💎");
+       gameState[row][col] = '💎';
+    }
+    else {
        gameState[row][col] = movingPiece;
     }
     
     gameState[fromRow][fromCol] = ' ';
 
-    // 3. SWITCH TURNS
+    // SWITCH TURNS
     currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
-    const statusText = currentTurn === 'orange' ? "Orange's Turn (البرتقالي)" : "Brown's Turn (البني)";
-    document.getElementById('status').innerText = statusText;
+    document.getElementById('status').innerText = 
+      currentTurn === 'orange' ? "Orange's Turn (البرتقالي)" : "Brown's Turn (البني)";
 
     selectedSquare = null;
     drawBoard(gameState);
   }
 }
 
-// 10x10 Game Start
+// 10x10 Game Start (Orange bottom, Brown top)
 let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
+// Brown Team
+gameState[0] = ['🚙', ' ', ' ', '🏰', '🤴', '🦄', ' ', ' ', ' ', '🚙'];
+gameState[1] = Array(10).fill('💂');
+// Orange Team
 gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
 gameState[8] = Array(10).fill('🛡️');
-gameState[0] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
-gameState[1] = Array(10).fill('🛡️');
 
 drawBoard(gameState);
