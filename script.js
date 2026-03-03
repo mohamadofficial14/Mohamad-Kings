@@ -1,44 +1,64 @@
-const board = document.getElementById('game-board');
+let selectedSquare = null;
 
-// 1. The Piece Layout for the Back Rank (Rank 0 and Rank 9)
-// C=Car, M=Minister(Mosque), K=King, H=Horse, E=Empty
-const orangeBackRank = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
-const brownBackRank  = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
+// This function clears the board and redraws it every time a move happens
+function drawBoard(currentBoardState) {
+  const boardElement = document.getElementById('game-board');
+  boardElement.innerHTML = ''; // Clear board
 
-function createBoard() {
-  for (let row = 0; row < 10; row++) {
-    for (let col = 0; col < 10; col++) {
+  currentBoardState.forEach((row, rowIndex) => {
+    row.forEach((piece, colIndex) => {
       const square = document.createElement('div');
-      square.className = 'square';
+      square.className = `square ${(rowIndex + colIndex) % 2 === 0 ? 'orange-sq' : 'brown-sq'}`;
+      square.innerText = piece || '';
       
-      // Alternate colors: Warm Orange and Wooden Brown
-      if ((row + col) % 2 === 0) {
-        square.classList.add('orange-sq');
-      } else {
-        square.classList.add('brown-sq');
+      // Add 'selected' visual if clicked
+      if (selectedSquare && selectedSquare.row === rowIndex && selectedSquare.col === colIndex) {
+        square.style.backgroundColor = "yellow"; 
       }
 
-      // 2. Spawn the Orange Army (Bottom of board)
-      if (row === 9) { // Rank 1
-        square.innerText = orangeBackRank[col];
-        square.classList.add('orange-piece');
-      } else if (row === 8) { // Rank 2
-        square.innerText = '🛡️'; // Soldier
-        square.classList.add('orange-piece');
-      }
+      square.onclick = () => handleSquareClick(rowIndex, colIndex);
+      boardElement.appendChild(square);
+    });
+  });
+}
 
-      // 3. Spawn the Brown Army (Top of board)
-      if (row === 0) { // Rank 1
-        square.innerText = brownBackRank[col];
-        square.classList.add('brown-piece');
-      } else if (row === 1) { // Rank 2
-        square.innerText = '🛡️'; // Soldier
-        square.classList.add('brown-piece');
-      }
+// THE RULES: Handle clicking squares
+function handleSquareClick(row, col) {
+  const piece = gameState[row][col];
 
-      board.appendChild(square);
+  if (selectedSquare) {
+    const fromRow = selectedSquare.row;
+    const fromCol = selectedSquare.col;
+    const movingPiece = gameState[fromRow][fromCol];
+
+    // 1. THE HORSE MOUNTING LOGIC 🐎
+    if (movingPiece === '🛡️' && gameState[row][col] === '🐎') {
+       gameState[row][col] = '🏇'; // Soldier mounts!
+       gameState[fromRow][fromCol] = ' ';
+    } 
+    // 2. BASIC MOVEMENT
+    else {
+       gameState[row][col] = movingPiece;
+       gameState[fromRow][fromCol] = ' ';
+    }
+
+    selectedSquare = null;
+    drawBoard(gameState);
+  } else {
+    if (piece !== ' ') {
+      selectedSquare = { row, col };
+      drawBoard(gameState);
     }
   }
 }
 
-createBoard();
+// Initialize the 10x10 Game State
+let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
+
+// Setup Starting Positions
+gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
+gameState[8] = Array(10).fill('🛡️');
+gameState[0] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
+gameState[1] = Array(10).fill('🛡️');
+
+drawBoard(gameState);
