@@ -1,22 +1,81 @@
+// --- 1. SUPABASE CONFIG ---
+// I've plugged in your specific URL and Anon Key below!
+const supabaseUrl = 'https://bpdckzmedlrpkkogkrtv.supabase.co';
+const supabaseKey = 'sb_publishable_HnSlQ7Azs57FlMVhaSNAUA_GsqI2Bru';
+
+// Note: We use 'supabase.createClient' after the library is loaded in your HTML
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// --- 2. GAME STATE VARIABLES ---
 let selectedSquare = null;
 let currentTurn = 'orange';
 let gameActive = true;
-let boardHistory = {}; // 📖 Stores snapshots of the board
+let currentUser = null; 
 
 const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
 const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
 
+// Default starting board
+let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
+gameState[0] = ['🚙', ' ', ' ', '🕍', '🤴', '🦄', ' ', ' ', ' ', '🚙'];
+gameState[1] = Array(10).fill('💂');
+gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
+gameState[8] = Array(10).fill('🛡️');
+
+// --- 3. CLOUD FUNCTIONS ---
+
+// Sync game to cloud whenever a move happens
+async function syncGameToCloud() {
+  if (!currentUser) return; 
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      last_board_state: JSON.stringify(gameState), 
+      current_turn: currentTurn 
+    })
+    .eq('id', currentUser.id);
+
+  if (error) console.error("Cloud Sync Error:", error.message);
+}
+
+// Load game from cloud when user logs in
+async function loadSavedGame() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    currentUser = user;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('last_board_state, current_turn')
+      .single();
+
+    if (data && data.last_board_state) {
+      gameState = JSON.parse(data.last_board_state);
+      currentTurn = data.current_turn || 'orange';
+      console.log("Welcome back, King! Game loaded. 👑");
+      drawBoard(gameState);
+    }
+  }
+}
+
+// --- 4. GAME LOGIC ---
+
 function drawBoard(currentBoardState) {
   const boardElement = document.getElementById('game-board');
+  if (!boardElement) return;
   boardElement.innerHTML = '';
+  
   currentBoardState.forEach((row, rowIndex) => {
     row.forEach((piece, colIndex) => {
       const square = document.createElement('div');
+      // Adding basic classes for styling
       square.className = `square ${(rowIndex + colIndex) % 2 === 0 ? 'orange-sq' : 'brown-sq'}`;
       square.innerText = piece || '';
+      
       if (selectedSquare && selectedSquare.row === rowIndex && selectedSquare.col === colIndex) {
         square.style.backgroundColor = "yellow"; 
       }
+      
       square.onclick = () => handleSquareClick(rowIndex, colIndex);
       boardElement.appendChild(square);
     });
@@ -25,7 +84,6 @@ function drawBoard(currentBoardState) {
 
 function handleSquareClick(row, col) {
   if (!gameActive) return;
-
   const piece = gameState[row][col];
   
   if (!selectedSquare) {
@@ -38,87 +96,21 @@ function handleSquareClick(row, col) {
     const fromRow = selectedSquare.row;
     const fromCol = selectedSquare.col;
     const movingPiece = gameState[fromRow][fromCol];
-    const rowDiff = Math.abs(row - fromRow);
-    const colDiff = Math.abs(col - fromCol);
 
-    // --- MOVEMENT RULES ---
-    
-    // 🛡️ SOLDIER CAPTURE & MOVE
-    if (movingPiece === '🛡️' || movingPiece === '💂') {
-        if (rowDiff === 1 && colDiff === 0 && piece !== ' ' && !((movingPiece === '🛡️' && orangeTeam.includes(piece)) || (movingPiece === '💂' && brownTeam.includes(piece)))) {
-            // Valid capture
-        } 
-        else if (piece === ' ' && rowDiff <= 2 && colDiff === 0) { } 
-        else if (piece !== ' ' && (piece === '🐎' || piece === '🦄')) { }
-        else {
-            alert("Soldiers only move 2 squares or capture 1 square vertically! 🛑");
-            selectedSquare = null; drawBoard(gameState); return;
-        }
-    }
+    // Move piece logic
+    gameState[row][col] = movingPiece; 
+    gameState[fromRow][fromCol] = ' ';
 
-    // 🕌 MINISTER (6 squares vertical)
-    if (movingPiece === '🕌' || movingPiece === '🕍') {
-        if (colDiff !== 0 || rowDiff > 6) {
-            alert("The Minister is limited to 6 squares vertically! 🕌");
-            selectedSquare = null; drawBoard(gameState); return;
-        }
-    }
-
-    // 🏎️ CAR (5 squares)
-    if ((movingPiece === '🏎️' || movingPiece === '🚙') && (rowDiff > 5 || colDiff > 5)) {
-       alert("Traffic Jam! Cars can only travel 5 squares! 🏎️💨");
-       selectedSquare = null; drawBoard(gameState); return;
-    }
-
-    // 👑 KING (2 steps max)
-    if ((movingPiece === '👑' || movingPiece === '🤴') && (rowDiff > 2 || colDiff > 2)) {
-       alert("The King moves 2 steps max! 👑");
-       selectedSquare = null; drawBoard(gameState); return;
-    }
-
-    // 🐎 HORSE & 🦄 UNICORN (1 square limit)
-    if (movingPiece === '🐎' || movingPiece === '🦄') {
-       if (rowDiff > 1 || colDiff > 1) {
-          alert("The Horse and Unicorn are tired! They can only move 1 square. 🐎💤");
-          selectedSquare = null; drawBoard(gameState); return;
-       }
-    }
-
-    // --- LOGIC: FALLMATE & PROMOTION ---
-
+    // Check for King capture (Fallmate)
     if (piece === '👑' || piece === '🤴') {
        gameActive = false;
-       document.getElementById('status').innerText = "🏆 GAME OVER - FALLMATE! 🏆";
        alert("FALLMATE! موت الملك! 👑🏆");
     }
 
-    // Promotion logic
-    if ((movingPiece === '🛡️' || movingPiece === '💂') && (piece === '🐎' || piece === '🦄')) {
-       gameState[row][col] = '🏇';
-    } else if (movingPiece === '🛡️' && row === 0) {
-       gameState[row][col] = '💎';
-    } else if (movingPiece === '💂' && row === 9) {
-       gameState[row][col] = '💠';
-    } else {
-       gameState[row][col] = movingPiece;
-    }
-    
-    gameState[fromRow][fromCol] = ' ';
-
-    // --- UPDATED: TWOFOLD REPETITION CHECK ---
-    const boardSnapshot = JSON.stringify(gameState);
-    boardHistory[boardSnapshot] = (boardHistory[boardSnapshot] || 0) + 1;
-
-    if (boardHistory[boardSnapshot] >= 2) {
-       gameActive = false;
-       document.getElementById('status').innerText = "🤝 DRAW - TWOFOLD REPETITION! 🤝";
-       document.getElementById('status').style.color = "gray";
-       alert("Stalemate by Repetition 🕺💃🛑🤝");
-    }
-    
     if (gameActive) {
         currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
-        document.getElementById('status').innerText = currentTurn === 'orange' ? "Orange's Turn (البرتقالي)" : "Brown's Turn (البني)";
+        // ☁️ SYNC TO SUPABASE AFTER EVERY MOVE
+        syncGameToCloud();
     }
 
     selectedSquare = null;
@@ -126,10 +118,7 @@ function handleSquareClick(row, col) {
   }
 }
 
-let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
-gameState[0] = ['🚙', ' ', ' ', '🕍', '🤴', '🦄', ' ', ' ', ' ', '🚙'];
-gameState[1] = Array(10).fill('💂');
-gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
-gameState[8] = Array(10).fill('🛡️');
-
-drawBoard(gameState);
+window.onload = () => {
+    loadSavedGame();
+    drawBoard(gameState);
+};
