@@ -45,14 +45,24 @@ function handleSquareClick(row, col) {
     
     // 🛡️ SOLDIER CAPTURE & MOVE
     if (movingPiece === '🛡️' || movingPiece === '💂') {
-        if (rowDiff === 1 && colDiff === 0 && piece !== ' ' && !((movingPiece === '🛡️' && orangeTeam.includes(piece)) || (movingPiece === '💂' && brownTeam.includes(piece)))) {
-            // Valid capture
+        const isCapture = piece !== ' ' && !((movingPiece === '🛡️' && orangeTeam.includes(piece)) || (movingPiece === '💂' && brownTeam.includes(piece)));
+        
+        if (rowDiff === 1 && colDiff === 0 && isCapture) {
+            // Trigger your custom alert! 👊
+            alert("Vertical Takedown! 👊");
         } 
-        else if (piece === ' ' && rowDiff <= 2 && colDiff === 0) { } 
-        else if (piece !== ' ' && (piece === '🐎' || piece === '🦄')) { }
+        else if (piece === ' ' && rowDiff <= 2 && colDiff === 0) { 
+            // Standard move - no alert needed
+        } 
+        else if (piece !== ' ' && (piece === '🐎' || piece === '🦄')) { 
+            // Jumping/Promotion logic handle below
+        }
         else {
             alert("Soldiers only move 2 squares or capture 1 square vertically! 🛑");
             selectedSquare = null; drawBoard(gameState); return;
+        }
+    }
+
         }
     }
 
