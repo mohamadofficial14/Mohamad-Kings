@@ -62,9 +62,7 @@ function handleSquareClick(row, col) {
             selectedSquare = null; drawBoard(gameState); return;
         }
     }
-
-        }
-    }
+    
 
     // 🕌 MINISTER (6 squares vertical)
     if (movingPiece === '🕌' || movingPiece === '🕍') {
