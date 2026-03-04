@@ -4,27 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mohamad Kings 👑</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>MOHAMAD KINGS</h1>
   <div id="game-board"></div>
+  
   <div id="status">Orange's Turn (البرتقالي)</div>
-<button id="restart-btn" onclick="location.reload()">RESTART GAME 🔄</button>
-<div id="rules-section" style="margin-top: 30px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
-  <h2 style="color: #FF8C00;">📜 THE REVOLUTIONARY RULES</h2>
-  <ul>
-    <li><strong>No Stalemates:</strong> We don't do draws here. If the King is captured, it’s <strong>FALLMATE</strong>. Game over. 👑🏆</li>
-    <li><strong>The Soldier (🛡️):</strong> Moves up to 2 squares forward. Captures <strong>vertically forward</strong> (1 square). No diagonal "shy" moves! 👊</li>
-    <li><strong>The Vice President (💎):</strong> When a Soldier reaches the enemy's home row, he eats too much Shawarma, becomes the Vice President, and gains massive power (but is too heavy for horses). 🌯</li>
-    <li><strong>The Car (🏎️):</strong> High speed, but respects traffic. Moves up to 5 squares. 💨</li>
-    <li><strong>The Minister (🕌):</strong> A spiritual powerhouse. Moves up to 6 squares vertically.</li>
-    <li><strong>The Horse (🐎):</strong> The Infinite Galloper. No teleportation limits. Landing a Soldier on a Horse creates a <strong>Cavalry Unit (🏇)</strong>.</li>
-    <li><strong>The King (👑):</strong> Majestic but steady. Moves up to 2 squares in any direction.</li>
-  </ul>
-</div>
+  
+  <div id="notice" style="font-weight: bold; font-size: 1.8rem; margin: 15px 0; min-height: 2rem;"></div>
+
+  <button id="restart-btn" onclick="location.reload()">RESTART GAME 🔄</button>
+
+  <div id="rules-section" style="margin-top: 30px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+    <h2 style="color: #FF8C00;">📜 THE REVOLUTIONARY RULES</h2>
+    <ul>
+      <li><strong>No Stalemates:</strong> We don't do draws here. If the King is captured, it’s <strong>FALLMATE</strong>. Game over. 👑🏆</li>
+      <li><strong>The Soldier (🛡️):</strong> Moves up to 2 squares forward. Captures <strong>vertically forward</strong> (1 square). No diagonal "shy" moves! 👊</li>
+      <li><strong>The Vice President (💎):</strong> When a Soldier reaches the enemy's home row, he eats too much Shawarma, becomes the Vice President, and gains massive power (but is too heavy for horses). 🌯</li>
+      <li><strong>The Car (🏎️):</strong> High speed, but respects traffic. Moves up to 5 squares. 💨</li>
+      <li><strong>The Minister (🕌):</strong> A spiritual powerhouse. Moves up to 6 squares vertically.</li>
+      <li><strong>The Horse (🐎):</strong> The Infinite Galloper. No teleportation limits. Landing a Soldier on a Horse creates a <strong>Cavalry Unit (🏇)</strong>.</li>
+      <li><strong>The King (👑):</strong> Majestic but steady. Moves up to 2 squares in any direction.</li>
+    </ul>
+  </div>
 
   <script src="script.js"></script>
 </body>
 </html>
- 
