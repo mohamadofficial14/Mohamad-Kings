@@ -1,143 +1,89 @@
-let selectedSquare = null;
-let currentTurn = 'orange';
-let gameActive = true;
-let boardHistory = {}; // 📖 Stores snapshots of the board
+// --- 1. DATA & PIECE VALUES ---
+const pieceValues = {
+  '👑': 1000, '🤴': -1000, '🕌': 10, '🕍': -10,
+  '🏇': 7, '💎': 7, '💠': -7, '🏎️': 5, '🚙': -5,
+  '🐎': 3, '🦄': -3, '🛡️': 1, '💂': -1
+};
 
-const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
-const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
+// --- 2. MOVE VALIDATION (The AI's "Eyes") ---
+function isValidMove(board, fromRow, fromCol, toRow, toCol, team) {
+  const piece = board[fromRow][fromCol];
+  const target = board[toRow][toCol];
+  const rowDiff = Math.abs(toRow - fromRow);
+  const colDiff = Math.abs(toCol - fromCol);
 
-function drawBoard(currentBoardState) {
-  const boardElement = document.getElementById('game-board');
-  boardElement.innerHTML = '';
-  currentBoardState.forEach((row, rowIndex) => {
-    row.forEach((piece, colIndex) => {
-      const square = document.createElement('div');
-      square.className = `square ${(rowIndex + colIndex) % 2 === 0 ? 'orange-sq' : 'brown-sq'}`;
-      square.innerText = piece || '';
-      if (selectedSquare && selectedSquare.row === rowIndex && selectedSquare.col === colIndex) {
-        square.style.backgroundColor = "yellow"; 
-      }
-      square.onclick = () => handleSquareClick(rowIndex, colIndex);
-      boardElement.appendChild(square);
-    });
-  });
+  // Don't capture your own team
+  if (team === 'orange' && orangeTeam.includes(target)) return false;
+  if (team === 'brown' && brownTeam.includes(target)) return false;
+
+  // Soldier Logic
+  if (piece === '🛡️' || piece === '💂') {
+    if (rowDiff === 1 && colDiff === 0 && target !== ' ') return true; // Capture
+    if (target === ' ' && rowDiff <= 2 && colDiff === 0) return true;  // Move
+    if (target === '🐎' || target === '🦄') return true;               // Promotion step
+    return false;
+  }
+  // Minister (6 vertical)
+  if (piece === '🕌' || piece === '🕍') return colDiff === 0 && rowDiff <= 6;
+  // Car (5 squares)
+  if (piece === '🏎️' || piece === '🚙') return rowDiff <= 5 && colDiff <= 5;
+  // King (2 squares)
+  if (piece === '👑' || piece === '🤴') return rowDiff <= 2 && colDiff <= 2;
+  // Horse/Unicorn (1 square)
+  if (piece === '🐎' || piece === '🦄') return rowDiff <= 1 && colDiff <= 1;
+
+  return true; 
 }
 
-function handleSquareClick(row, col) {
-  if (!gameActive) return;
+// --- 3. THE AI "BRAIN" (Minimax) ---
+function minimax(board, depth, isMaximizing) {
+  if (depth === 0) return evaluateBoard(board);
 
-  const piece = gameState[row][col];
-  
-  if (!selectedSquare) {
-    if (piece === ' ') return;
-    if (currentTurn === 'orange' && !orangeTeam.includes(piece)) return;
-    if (currentTurn === 'brown' && !brownTeam.includes(piece)) return;
-    selectedSquare = { row, col };
+  let bestEval = isMaximizing ? -Infinity : Infinity;
+  const moves = getAllPossibleMoves(board, isMaximizing ? 'orange' : 'brown');
+
+  for (const move of moves) {
+    const tempBoard = JSON.parse(JSON.stringify(board)); // Clone board
+    executeMove(tempBoard, move);
+    const eval = minimax(tempBoard, depth - 1, !isMaximizing);
+    bestEval = isMaximizing ? Math.max(bestEval, eval) : Math.min(bestEval, eval);
+  }
+  return bestEval;
+}
+
+// --- 4. EXECUTING THE AI TURN ---
+function makeAIMove() {
+  let bestMove = null;
+  let bestValue = Infinity; // Brown AI wants the lowest (negative) score
+  const moves = getAllPossibleMoves(gameState, 'brown');
+
+  moves.forEach(move => {
+    const tempBoard = JSON.parse(JSON.stringify(gameState));
+    executeMove(tempBoard, move);
+    const boardValue = minimax(tempBoard, 2, true); // Search 2 moves ahead
+    if (boardValue < bestValue) {
+      bestValue = boardValue;
+      bestMove = move;
+    }
+  });
+
+  if (bestMove) {
+    // Actually apply the move to the real game
+    executeMove(gameState, bestMove);
+    currentTurn = 'orange';
     drawBoard(gameState);
-  } else {
-    const fromRow = selectedSquare.row;
-    const fromCol = selectedSquare.col;
-    const movingPiece = gameState[fromRow][fromCol];
-    const rowDiff = Math.abs(row - fromRow);
-    const colDiff = Math.abs(col - fromCol);
-
-    // --- MOVEMENT RULES ---
-    
-    // 🛡️ SOLDIER CAPTURE & MOVE
-    if (movingPiece === '🛡️' || movingPiece === '💂') {
-        const isCapture = piece !== ' ' && !((movingPiece === '🛡️' && orangeTeam.includes(piece)) || (movingPiece === '💂' && brownTeam.includes(piece)));
-        
-        if (rowDiff === 1 && colDiff === 0 && isCapture) {
-            // Trigger your custom alert! 👊
-            alert("Vertical Takedown! 👊");
-        } 
-        else if (piece === ' ' && rowDiff <= 2 && colDiff === 0) { 
-            // Standard move - no alert needed
-        } 
-        else if (piece !== ' ' && (piece === '🐎' || piece === '🦄')) { 
-            // Jumping/Promotion logic handle below
-        }
-        else {
-            alert("Soldiers only move 2 squares or capture 1 square vertically! 🛑");
-            selectedSquare = null; drawBoard(gameState); return;
-        }
-    }
-    
-
-    // 🕌 MINISTER (6 squares vertical)
-    if (movingPiece === '🕌' || movingPiece === '🕍') {
-        if (colDiff !== 0 || rowDiff > 6) {
-            alert("The Minister is limited to 6 squares vertically! 🕌");
-            selectedSquare = null; drawBoard(gameState); return;
-        }
-    }
-
-    // 🏎️ CAR (5 squares)
-    if ((movingPiece === '🏎️' || movingPiece === '🚙') && (rowDiff > 5 || colDiff > 5)) {
-       alert("Traffic Jam! Cars can only travel 5 squares! 🏎️💨");
-       selectedSquare = null; drawBoard(gameState); return;
-    }
-
-    // 👑 KING (2 steps max)
-    if ((movingPiece === '👑' || movingPiece === '🤴') && (rowDiff > 2 || colDiff > 2)) {
-       alert("The King moves 2 steps max! 👑");
-       selectedSquare = null; drawBoard(gameState); return;
-    }
-
-    // 🐎 HORSE & 🦄 UNICORN (1 square limit)
-    if (movingPiece === '🐎' || movingPiece === '🦄') {
-       if (rowDiff > 1 || colDiff > 1) {
-          alert("The Horse and Unicorn are tired! They can only move 1 square. 🐎💤");
-          selectedSquare = null; drawBoard(gameState); return;
-       }
-    }
-
-    // --- LOGIC: FALLMATE & PROMOTION ---
-
-    if (piece === '👑' || piece === '🤴') {
-       gameActive = false;
-       document.getElementById('status').innerText = "🏆 GAME OVER - FALLMATE! 🏆";
-       alert("FALLMATE! موت الملك! 👑🏆");
-    }
-
-    // Promotion logic
-    if ((movingPiece === '🛡️' || movingPiece === '💂') && (piece === '🐎' || piece === '🦄')) {
-       gameState[row][col] = '🏇';
-    } else if (movingPiece === '🛡️' && row === 0) {
-       gameState[row][col] = '💎';
-    } else if (movingPiece === '💂' && row === 9) {
-       gameState[row][col] = '💠';
-    } else {
-       gameState[row][col] = movingPiece;
-    }
-    
-    gameState[fromRow][fromCol] = ' ';
-
-    // --- UPDATED: TWOFOLD REPETITION CHECK ---
-    const boardSnapshot = JSON.stringify(gameState);
-    boardHistory[boardSnapshot] = (boardHistory[boardSnapshot] || 0) + 1;
-
-    if (boardHistory[boardSnapshot] >= 2) {
-       gameActive = false;
-       document.getElementById('status').innerText = "🤝 DRAW - TWOFOLD REPETITION! 🤝";
-       document.getElementById('status').style.color = "gray";
-       alert("Stalemate by Repetition 🕺💃🛑🤝");
-    }
-    
-    if (gameActive) {
-        currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
-        document.getElementById('status').innerText = currentTurn === 'orange' ? "Orange's Turn (البرتقالي)" : "Brown's Turn (البني)";
-    }
-
-    selectedSquare = null;
-    drawBoard(gameState);
+    checkGameOver();
   }
 }
 
-let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
-gameState[0] = ['🚙', ' ', ' ', '🕍', '🤴', '🦄', ' ', ' ', ' ', '🚙'];
-gameState[1] = Array(10).fill('💂');
-gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
-gameState[8] = Array(10).fill('🛡️');
+// --- 5. UPDATED GAME LOOP ---
+function handleSquareClick(row, col) {
+  if (!gameActive || currentTurn === 'brown') return; // Disable clicks during AI turn
 
-drawBoard(gameState);
+  // ... [Your existing movement logic for the Orange Player goes here] ...
+
+  if (gameActive && currentTurn === 'brown') {
+    document.getElementById('status').innerText = "AI is thinking... 🤖";
+    setTimeout(makeAIMove, 600); // Give the user a moment to see the board
+  }
+}
