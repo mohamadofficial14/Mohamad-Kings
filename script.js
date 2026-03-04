@@ -1,7 +1,7 @@
 let selectedSquare = null;
 let currentTurn = 'orange';
+let gameActive = true; // NEW: Controls if pieces can move
 
-// 1. Teams & Emojis
 const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
 const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
 
@@ -23,6 +23,8 @@ function drawBoard(currentBoardState) {
 }
 
 function handleSquareClick(row, col) {
+  if (!gameActive) return; // BOARD FREEZE: Stop everything if game is over!
+
   const piece = gameState[row][col];
   
   if (!selectedSquare) {
@@ -38,26 +40,22 @@ function handleSquareClick(row, col) {
     const rowDiff = Math.abs(row - fromRow);
     const colDiff = Math.abs(col - fromCol);
 
-    // --- NEW PIECE LOGIC ---
+    // --- MOVEMENT RULES ---
 
-    // 🛡️ SOLDIER CAPTURE & MOVE (Your new logic!)
+    // 🛡️ SOLDIER CAPTURE & MOVE
     if (movingPiece === '🛡️' || movingPiece === '💂') {
         if (rowDiff === 1 && colDiff === 0 && piece !== ' ' && !((movingPiece === '🛡️' && orangeTeam.includes(piece)) || (movingPiece === '💂' && brownTeam.includes(piece)))) {
             alert("Vertical Takedown! 👊");
         } 
-        else if (piece === ' ' && rowDiff <= 2 && colDiff === 0) {
-            // Normal move allowed
-        } 
-        else if (piece !== ' ' && (piece === '🐎' || piece === '🦄')) {
-            // Allow landing on Horse for mounting
-        }
+        else if (piece === ' ' && rowDiff <= 2 && colDiff === 0) { } 
+        else if (piece !== ' ' && (piece === '🐎' || piece === '🦄')) { }
         else {
             alert("Soldiers only move 2 squares or capture 1 square vertically! 🛑");
             selectedSquare = null; drawBoard(gameState); return;
         }
     }
 
-    // 🕌 MINISTER (6 squares vertically straight)
+    // 🕌 MINISTER (6 squares vertical)
     if (movingPiece === '🕌' || movingPiece === '🕍') {
         if (colDiff !== 0 || rowDiff > 6) {
             alert("The Minister is limited to 6 squares vertically! 🕌");
@@ -71,18 +69,18 @@ function handleSquareClick(row, col) {
        selectedSquare = null; drawBoard(gameState); return;
     }
 
-    // 🐎 HORSE (Infinite! No limits here)
-    // No "if" check needed for horse, he can gallop anywhere!
-
     // 👑 KING (2 steps max)
     if ((movingPiece === '👑' || movingPiece === '🤴') && (rowDiff > 2 || colDiff > 2)) {
        alert("The King moves 2 steps max! 👑");
        selectedSquare = null; drawBoard(gameState); return;
     }
 
-    // --- CAPTURE & PROMOTION ---
+    // --- LOGIC: FALLMATE & PROMOTION ---
 
     if (piece === '👑' || piece === '🤴') {
+       gameActive = false; // FREEZE THE BOARD
+       document.getElementById('status').innerText = "🏆 GAME OVER - FALLMATE! 🏆";
+       document.getElementById('status').style.color = "gold";
        alert("FALLMATE! موت الملك! 👑🏆");
     }
 
@@ -100,8 +98,12 @@ function handleSquareClick(row, col) {
     }
     
     gameState[fromRow][fromCol] = ' ';
-    currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
-    document.getElementById('status').innerText = currentTurn === 'orange' ? "Orange's Turn (البرتقالي)" : "Brown's Turn (البني)";
+    
+    if (gameActive) {
+        currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
+        document.getElementById('status').innerText = currentTurn === 'orange' ? "Orange's Turn (البرتقالي)" : "Brown's Turn (البني)";
+    }
+
     selectedSquare = null;
     drawBoard(gameState);
   }
