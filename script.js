@@ -75,6 +75,16 @@ function handleSquareClick(row, col) {
        selectedSquare = null; drawBoard(gameState); return;
     }
 
+    // 🐎 HORSE & 🦄 UNICORN (1 square limit)
+    if (movingPiece === '🐎' || movingPiece === '🦄') {
+       if (rowDiff > 1 || colDiff > 1) {
+          alert("The Horse and Unicorn are tired! They can only move 1 square. 🐎💤");
+          selectedSquare = null; 
+          drawBoard(gameState); 
+          return;
+       }
+    }
+
     // --- LOGIC: FALLMATE & PROMOTION ---
 
     if (piece === '👑' || piece === '🤴') {
