@@ -1,6 +1,7 @@
 let selectedSquare = null;
 let currentTurn = 'orange';
-let gameActive = true; // NEW: Controls if pieces can move
+let gameActive = true;
+let boardHistory = {}; // 📖 NEW: Stores snapshots of the board
 
 const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
 const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
@@ -23,7 +24,7 @@ function drawBoard(currentBoardState) {
 }
 
 function handleSquareClick(row, col) {
-  if (!gameActive) return; // BOARD FREEZE: Stop everything if game is over!
+  if (!gameActive) return;
 
   const piece = gameState[row][col];
   
@@ -41,11 +42,11 @@ function handleSquareClick(row, col) {
     const colDiff = Math.abs(col - fromCol);
 
     // --- MOVEMENT RULES ---
-
+    
     // 🛡️ SOLDIER CAPTURE & MOVE
     if (movingPiece === '🛡️' || movingPiece === '💂') {
         if (rowDiff === 1 && colDiff === 0 && piece !== ' ' && !((movingPiece === '🛡️' && orangeTeam.includes(piece)) || (movingPiece === '💂' && brownTeam.includes(piece)))) {
-            alert("Vertical Takedown! 👊");
+            // Valid capture
         } 
         else if (piece === ' ' && rowDiff <= 2 && colDiff === 0) { } 
         else if (piece !== ' ' && (piece === '🐎' || piece === '🦄')) { }
@@ -79,35 +80,41 @@ function handleSquareClick(row, col) {
     if (movingPiece === '🐎' || movingPiece === '🦄') {
        if (rowDiff > 1 || colDiff > 1) {
           alert("The Horse and Unicorn are tired! They can only move 1 square. 🐎💤");
-          selectedSquare = null; 
-          drawBoard(gameState); 
-          return;
+          selectedSquare = null; drawBoard(gameState); return;
        }
     }
 
     // --- LOGIC: FALLMATE & PROMOTION ---
 
     if (piece === '👑' || piece === '🤴') {
-       gameActive = false; // FREEZE THE BOARD
+       gameActive = false;
        document.getElementById('status').innerText = "🏆 GAME OVER - FALLMATE! 🏆";
-       document.getElementById('status').style.color = "gold";
        alert("FALLMATE! موت الملك! 👑🏆");
     }
 
+    // Promotion logic
     if ((movingPiece === '🛡️' || movingPiece === '💂') && (piece === '🐎' || piece === '🦄')) {
        gameState[row][col] = '🏇';
-    } 
-    else if (movingPiece === '🛡️' && row === 0) {
-       alert("Orange Vice President Promoted! 💎🌯");
+    } else if (movingPiece === '🛡️' && row === 0) {
        gameState[row][col] = '💎';
     } else if (movingPiece === '💂' && row === 9) {
-       alert("Brown Vice President Promoted! 💠🌯");
        gameState[row][col] = '💠';
     } else {
        gameState[row][col] = movingPiece;
     }
     
     gameState[fromRow][fromCol] = ' ';
+
+    // --- NEW: THREEFOLD REPETITION CHECK ---
+    const boardSnapshot = JSON.stringify(gameState);
+    boardHistory[boardSnapshot] = (boardHistory[boardSnapshot] || 0) + 1;
+
+    if (boardHistory[boardSnapshot] >= 3) {
+       gameActive = false;
+       document.getElementById('status').innerText = "🤝 DRAW - THREEFOLD REPETITION! 🤝";
+       document.getElementById('status').style.color = "gray";
+       alert("It's a draw! The pieces are dancing in circles! 💃🕺🤝");
+    }
     
     if (gameActive) {
         currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
