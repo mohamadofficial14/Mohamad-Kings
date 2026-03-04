@@ -1,7 +1,7 @@
 let selectedSquare = null;
 let currentTurn = 'orange';
 let gameActive = true;
-let boardHistory = {}; // 📖 NEW: Stores snapshots of the board
+let boardHistory = {}; // 📖 Stores snapshots of the board
 
 const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
 const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
@@ -105,15 +105,15 @@ function handleSquareClick(row, col) {
     
     gameState[fromRow][fromCol] = ' ';
 
-    // --- NEW: THREEFOLD REPETITION CHECK ---
+    // --- UPDATED: TWOFOLD REPETITION CHECK ---
     const boardSnapshot = JSON.stringify(gameState);
     boardHistory[boardSnapshot] = (boardHistory[boardSnapshot] || 0) + 1;
 
-    if (boardHistory[boardSnapshot] >= 3) {
+    if (boardHistory[boardSnapshot] >= 2) {
        gameActive = false;
-       document.getElementById('status').innerText = "🤝 DRAW - THREEFOLD REPETITION! 🤝";
+       document.getElementById('status').innerText = "🤝 DRAW - TWOFOLD REPETITION! 🤝";
        document.getElementById('status').style.color = "gray";
-       alert("It's a draw! The pieces are dancing in circles! 💃🕺🤝");
+       alert("It's a draw! No more repeating yourself! The pieces are dancing in circles! 🕺💃🛑🤝");
     }
     
     if (gameActive) {
