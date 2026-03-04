@@ -113,7 +113,7 @@ function handleSquareClick(row, col) {
        gameActive = false;
        document.getElementById('status').innerText = "🤝 DRAW - TWOFOLD REPETITION! 🤝";
        document.getElementById('status').style.color = "gray";
-       alert("It's a draw! No more repeating yourself! The pieces are dancing in circles! 🕺💃🛑🤝");
+       alert("Stalemate by Repetition 🕺💃🛑🤝");
     }
     
     if (gameActive) {
