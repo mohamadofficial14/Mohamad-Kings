@@ -7,40 +7,51 @@ body {
 
 #game-board {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-rows: repeat(10, 1fr);
+  grid-template-columns: repeat(10, 1fr); /* 10 columns */
+  grid-template-rows: repeat(10, 1fr);    /* 10 rows */
   width: 95vw;
   height: 95vw;
   margin: 10px auto;
   border: 5px solid #3d2b1f;
-  position: relative; /* <--- ADD THIS so the animation stays on the board! */
 }
 
-/* ... keep all your other .square, .soldier, and .orange-piece styles here ... */
+/* Board Colors */
+.square {
+  width: 100%;
+  height: 100%;
+}
+
+.orange-sq { background-color: #ffcc80; } /* Light warm orange */
+.brown-sq { background-color: #8d6e63; }  /* Light wooden brown */
+
+/* The Soldiers (The 5cm Squares) */
+.soldier {
+  width: 70%;
+  height: 70%;
+  margin: 15%;
+  border-radius: 4px; /* Square but slightly soft */
+}
+
+.orange-piece { background-color: #FF8C00; border: 2px solid white; }
+.brown-piece { background-color: #5D4037; border: 2px solid #ccc; }
 
 .square {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 2rem;
+  font-size: 2rem; /* Big emojis! */
   cursor: pointer;
   user-select: none;
 }
 
-/* --- ADD THE ANIMATION STYLES AT THE BOTTOM --- */
-
-.fade-out-emoji {
-  position: absolute;
-  pointer-events: none; 
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-  z-index: 100; /* High number so it floats above the squares */
-  font-size: 2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* Make the King stand out (Tall and Majestic) */
+.square:contains('👑') {
+  font-size: 3rem;
+  margin-top: -10px; /* Makes him look taller */
 }
 
-.fade-away {
-  opacity: 0;
-  transform: scale(0.2) rotate(20deg); /* Shrinks and tilts slightly as it fades */
-}
+/* Style for the piece "team" colors */
+.orange-piece { color: #000; text-shadow: 0 0 5px #FF8C00; }
+.brown-piece { color: #000; text-shadow: 0 0 5px #5D4037; }
+
+ 
