@@ -41,44 +41,49 @@ function executeMove(row, col) {
     const fromRow = selectedSquare.row;
     const fromCol = selectedSquare.col;
     const movingPiece = gameState[fromRow][fromCol];
-    const rowDiff = Math.abs(row - fromRow);
-    const colDiff = Math.abs(col - fromCol);
     const pieceOnTarget = gameState[row][col];
+    const statusDisplay = document.getElementById('status');
 
-    // --- RULES CHECK ---
-    if ((movingPiece === '🛡️' || movingPiece === '💂') && (rowDiff > 2 || colDiff > 0)) {
-       if (!(rowDiff === 1 && colDiff === 0 && pieceOnTarget !== ' ')) {
-          selectedSquare = null; drawBoard(gameState); return;
-       }
-    }
-    // (Other rules omitted for brevity but kept in your logic...)
-
+    // --- WIN CONDITION CHECK ---
     if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
        gameActive = false;
-       alert("FALLMATE! 👑🏆");
+       
+       if (currentTurn === 'orange') {
+           // Orange wins!
+           statusDisplay.innerText = "Fallmate!";
+           statusDisplay.style.color = "orange";
+           statusDisplay.style.fontWeight = "bold";
+       } else {
+           // Brown wins!
+           statusDisplay.innerText = "Brown Fallmated you!";
+           statusDisplay.style.color = "red";
+           statusDisplay.style.fontWeight = "bold";
+       }
     }
 
     // Move piece
     gameState[row][col] = movingPiece;
     gameState[fromRow][fromCol] = ' ';
     
-    // Switch Turn
-    currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
-    document.getElementById('status').innerText = currentTurn === 'orange' ? "Orange's Turn" : "Brown is thinking...";
+    // Switch Turn (Only if game is still active)
+    if (gameActive) {
+        currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
+        statusDisplay.innerText = currentTurn === 'orange' ? "Orange's Turn" : "Brown is thinking...";
+        statusDisplay.style.color = "black"; // Reset color for normal turns
+    }
     
     selectedSquare = null;
     drawBoard(gameState);
 
     // TRIGGER AI if it's Brown's turn
     if (gameActive && currentTurn === 'brown') {
-        setTimeout(makeAIMove, 1000); // Wait 1 second
+        setTimeout(makeAIMove, 1000); 
     }
 }
 
 // 🤖 THE BROWN BOT BRAIN
 function makeAIMove() {
     let brownPieces = [];
-    // 1. Find all brown pieces
     for (let r = 0; r < 10; r++) {
         for (let c = 0; c < 10; c++) {
             if (brownTeam.includes(gameState[r][c])) {
@@ -87,12 +92,12 @@ function makeAIMove() {
         }
     }
 
-    // 2. Simple AI: Pick a random piece and try to move it forward
     let moved = false;
-    while (!moved && brownPieces.length > 0) {
+    let attempts = 0;
+    while (!moved && brownPieces.length > 0 && attempts < 50) {
         let randomIndex = Math.floor(Math.random() * brownPieces.length);
         let p = brownPieces[randomIndex];
-        let targetRow = p.r + 1; // Try to move forward
+        let targetRow = p.r + 1; 
         
         if (targetRow < 10) {
             selectedSquare = { row: p.r, col: p.c };
@@ -101,9 +106,11 @@ function makeAIMove() {
         } else {
             brownPieces.splice(randomIndex, 1);
         }
+        attempts++;
     }
 }
 
+// Initial Game Setup
 let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
 gameState[0] = ['🚙', ' ', ' ', '🕍', '🤴', '🦄', ' ', ' ', ' ', '🚙'];
 gameState[1] = Array(10).fill('💂');
