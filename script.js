@@ -112,12 +112,12 @@ function executeMove(row, col) {
     if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
        gameActive = false;
        if (currentTurn === 'brown') {
-           statusDisplay.innerText = "Brown Fallmated you!";
+           statusDisplay.innerText = "Brown fallmated you! -13 ELO points.";
            statusDisplay.style.color = "red";
            botSpeak("Dear Diary, today I won another match.");
            setTimeout(() => botSpeak("You didn't give up and that shows courage."), 3000);
        } else {
-           statusDisplay.innerText = "Fallmate! Orange Wins!";
+           statusDisplay.innerText = "Fallmate. Orange Wins! +11 ELO points added.";
            statusDisplay.style.color = "orange";
        }
     }
