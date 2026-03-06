@@ -111,7 +111,7 @@ function executeMove(row, col) {
     drawBoard();
 
     if (gameActive && currentTurn === 'brown') {
-        setTimeout(makeSmartAIMove, 2100); 
+        setTimeout(makeSmartAIMove, 600); 
     }
 }
 
