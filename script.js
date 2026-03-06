@@ -2,6 +2,9 @@ let selectedSquare = null;
 let currentTurn = 'orange';
 let gameActive = true;
 
+// Keep track of board states for repetition
+let moveHistory = [];
+
 const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
 const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
 
@@ -16,12 +19,21 @@ gameState[8] = Array(10).fill('🛡️');
 function botSpeak(message) {
     const speech = new SpeechSynthesisUtterance(message);
     const voices = window.speechSynthesis.getVoices();
-    // Try to find a nice sounding male voice
-    speech.voice = voices.find(v => v.name.includes('Male') || v.name.includes('UK')) || voices[0];
+    // Prioritize English UK voices
+    speech.voice = voices.find(v => v.lang.includes('en-GB')) || voices[0];
     speech.pitch = 0.9;
     speech.rate = 0.9;
     window.speechSynthesis.speak(speech);
 }
+
+// --- RESIGN BUTTON ---
+document.getElementById('resign-btn').onclick = () => {
+    if (!gameActive) return;
+    gameActive = false;
+    const statusDisplay = document.getElementById('status');
+    statusDisplay.innerText = "You resigned!";
+    statusDisplay.style.color = "maroon";
+};
 
 function drawBoard() {
     const boardElement = document.getElementById('game-board');
@@ -38,6 +50,19 @@ function drawBoard() {
             boardElement.appendChild(square);
         });
     });
+}
+
+function checkRepetition() {
+    const currentState = JSON.stringify(gameState);
+    moveHistory.push(currentState);
+    const count = moveHistory.filter(s => s === currentState).length;
+    
+    if (count >= 3) {
+        gameActive = false;
+        const statusDisplay = document.getElementById('status');
+        statusDisplay.innerText = "Stalemate by Repetition";
+        statusDisplay.style.color = "red";
+    }
 }
 
 function handleSquareClick(row, col) {
@@ -90,7 +115,6 @@ function executeMove(row, col) {
        if (currentTurn === 'brown') {
            statusDisplay.innerText = "Brown Fallmated you!";
            statusDisplay.style.color = "red";
-           // Bot speaks its lines!
            botSpeak("Dear Diary, today I won another match.");
            setTimeout(() => botSpeak("You didn't give up and that shows courage."), 3000);
        } else {
@@ -101,6 +125,11 @@ function executeMove(row, col) {
 
     gameState[row][col] = movingPiece;
     gameState[fromRow][fromCol] = ' ';
+    
+    // Check for repetition
+    if (gameActive) {
+        checkRepetition();
+    }
     
     if (gameActive) {
         currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
@@ -143,6 +172,5 @@ function makeSmartAIMove() {
     }
 }
 
-// Prepare voices (some browsers need this)
 window.speechSynthesis.getVoices();
 drawBoard();
