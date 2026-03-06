@@ -19,7 +19,6 @@ gameState[8] = Array(10).fill('🛡️');
 function botSpeak(message) {
     const speech = new SpeechSynthesisUtterance(message);
     const voices = window.speechSynthesis.getVoices();
-    // Prioritize English UK voices
     speech.voice = voices.find(v => v.lang.includes('en-GB')) || voices[0];
     speech.pitch = 0.9;
     speech.rate = 0.9;
@@ -126,7 +125,6 @@ function executeMove(row, col) {
     gameState[row][col] = movingPiece;
     gameState[fromRow][fromCol] = ' ';
     
-    // Check for repetition
     if (gameActive) {
         checkRepetition();
     }
@@ -144,8 +142,11 @@ function executeMove(row, col) {
     }
 }
 
+// --- UPDATED AI LOGIC ---
 function makeSmartAIMove() {
     let possibleMoves = [];
+    
+    // 1. Scan for all valid moves
     for (let r = 0; r < 10; r++) {
         for (let c = 0; c < 10; c++) {
             if (brownTeam.includes(gameState[r][c])) {
@@ -154,8 +155,11 @@ function makeSmartAIMove() {
                         if (isValidMove(r, c, tr, tc)) {
                             let score = 0;
                             const targetPiece = gameState[tr][tc];
+                            
+                            // Scoring logic
                             if (targetPiece === '👑') score = 1000;
                             else if (orangeTeam.includes(targetPiece)) score = 10;
+                            
                             possibleMoves.push({fR: r, fC: c, tR: tr, tC: tc, score: score});
                         }
                     }
@@ -165,10 +169,18 @@ function makeSmartAIMove() {
     }
 
     if (possibleMoves.length > 0) {
-        possibleMoves.sort((a, b) => b.score - a.score);
-        const bestMove = possibleMoves[0];
-        selectedSquare = { row: bestMove.fR, col: bestMove.fC };
-        executeMove(bestMove.tR, bestMove.tC);
+        // 2. Find the highest score available on the board
+        const maxScore = Math.max(...possibleMoves.map(m => m.score));
+
+        // 3. Filter to ONLY keep moves that have that max score
+        const bestMoves = possibleMoves.filter(m => m.score === maxScore);
+
+        // 4. PICK A RANDOM MOVE from the best ones! 🎲
+        const chosenMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+
+        // Execute
+        selectedSquare = { row: chosenMove.fR, col: chosenMove.fC };
+        executeMove(chosenMove.tR, chosenMove.tC);
     }
 }
 
