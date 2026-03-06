@@ -13,7 +13,37 @@ gameState[1] = Array(10).fill('💂');
 gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
 gameState[8] = Array(10).fill('🛡️');
 
-// --- 2. Speech Logic ---
+// --- 2. Board Rendering ---
+function drawBoard() {
+    const boardElement = document.getElementById('game-board');
+    boardElement.innerHTML = ''; 
+
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 10; col++) {
+            const square = document.createElement('div');
+            square.className = 'square';
+            
+            // Checkerboard pattern logic
+            if ((row + col) % 2 === 0) {
+                square.classList.add('orange-sq');
+            } else {
+                square.classList.add('brown-sq');
+            }
+
+            square.innerText = gameState[row][col];
+            
+            // Highlight selection
+            if (selectedSquare && selectedSquare.row === row && selectedSquare.col === col) {
+                square.style.border = "4px solid yellow";
+            }
+
+            square.onclick = () => handleSquareClick(row, col);
+            boardElement.appendChild(square);
+        }
+    }
+}
+
+// --- 3. Speech Logic ---
 function botSpeak(message) {
     const speech = new SpeechSynthesisUtterance(message);
     const voices = window.speechSynthesis.getVoices();
@@ -23,18 +53,8 @@ function botSpeak(message) {
     window.speechSynthesis.speak(speech);
 }
 
-function resign() {
-    if (!gameActive) return;
-    if (confirm("Are you sure you want to resign and give the bot the win?")) {
-        gameActive = false;
-        document.getElementById('status').innerText = "You resigned! Bot wins!";
-        botSpeak("Victory is mine. You fought well.");
-    }
-}
-
-// --- 3. Interaction Logic ---
+// --- 4. Interaction & Logic ---
 function handleSquareClick(row, col) {
-    // Only allow moves if game is active AND it's the player's turn
     if (!gameActive || currentTurn !== playerColor) return;
     
     const piece = gameState[row][col];
@@ -55,16 +75,19 @@ function handleSquareClick(row, col) {
     }
 }
 
-// --- 4. Initialization ---
+// Placeholder functions to prevent errors
+function isValidMove(r1, c1, r2, c2) { return true; } 
+function executeMove(r2, c2) { 
+    gameState[r2][c2] = gameState[selectedSquare.row][selectedSquare.col];
+    gameState[selectedSquare.row][selectedSquare.col] = ' ';
+    selectedSquare = null;
+    currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
+    drawBoard();
+}
+function makeSmartAIMove() { console.log("Bot is thinking..."); }
+
+// --- 5. Initialization ---
 window.onload = () => {
-    // Sync voices
-    window.speechSynthesis.getVoices();
-    
-    document.getElementById('status').innerText = `You are ${playerColor.toUpperCase()}. Current turn: Orange`;
-    
-    // If the random assignment makes the player Brown, the bot goes first
-    if (playerColor === 'brown') {
-        setTimeout(makeSmartAIMove, 1000);
-    }
+    document.getElementById('status').innerText = `You are ${playerColor.toUpperCase()}.`;
     drawBoard();
 };
