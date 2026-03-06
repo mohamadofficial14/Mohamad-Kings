@@ -15,7 +15,11 @@ gameState[1] = Array(10).fill('💂');
 gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
 gameState[8] = Array(10).fill('🛡️');
 
-// --- SPEECH LOGIC ---
+// --- HELPER LOGIC ---
+function getRandomELO() {
+    return Math.floor(Math.random() * (15 - 5 + 1)) + 5;
+}
+
 function botSpeak(message) {
     const speech = new SpeechSynthesisUtterance(message);
     const voices = window.speechSynthesis.getVoices();
@@ -111,13 +115,15 @@ function executeMove(row, col) {
 
     if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
        gameActive = false;
+       const eloChange = getRandomELO(); // Generate the random ELO!
+       
        if (currentTurn === 'brown') {
-           statusDisplay.innerText = "Brown fallmated you! -13 ELO points.";
+           statusDisplay.innerText = `Brown fallmated you! -${eloChange} ELO points.`;
            statusDisplay.style.color = "red";
            botSpeak("Dear Diary, today I won another match.");
            setTimeout(() => botSpeak("You didn't give up and that shows courage."), 3000);
        } else {
-           statusDisplay.innerText = "Fallmate. Orange Wins! +11 ELO points added.";
+           statusDisplay.innerText = `Fallmate. Orange Wins! +${eloChange} ELO points added.`;
            statusDisplay.style.color = "orange";
        }
     }
@@ -142,11 +148,10 @@ function executeMove(row, col) {
     }
 }
 
-// --- UPDATED AI LOGIC ---
+// --- AI LOGIC ---
 function makeSmartAIMove() {
     let possibleMoves = [];
     
-    // 1. Scan for all valid moves
     for (let r = 0; r < 10; r++) {
         for (let c = 0; c < 10; c++) {
             if (brownTeam.includes(gameState[r][c])) {
@@ -156,7 +161,6 @@ function makeSmartAIMove() {
                             let score = 0;
                             const targetPiece = gameState[tr][tc];
                             
-                            // Scoring logic
                             if (targetPiece === '👑') score = 1000;
                             else if (orangeTeam.includes(targetPiece)) score = 10;
                             
@@ -169,16 +173,10 @@ function makeSmartAIMove() {
     }
 
     if (possibleMoves.length > 0) {
-        // 2. Find the highest score available on the board
         const maxScore = Math.max(...possibleMoves.map(m => m.score));
-
-        // 3. Filter to ONLY keep moves that have that max score
         const bestMoves = possibleMoves.filter(m => m.score === maxScore);
-
-        // 4. PICK A RANDOM MOVE from the best ones! 🎲
         const chosenMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
 
-        // Execute
         selectedSquare = { row: chosenMove.fR, col: chosenMove.fC };
         executeMove(chosenMove.tR, chosenMove.tC);
     }
