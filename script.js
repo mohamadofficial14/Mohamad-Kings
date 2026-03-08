@@ -34,8 +34,8 @@ document.getElementById('resign-btn').onclick = () => {
     if (!gameActive) return;
     gameActive = false;
     const statusDisplay = document.getElementById('status');
-    statusDisplay.innerText = "You resigned!";
-    statusDisplay.style.color = "maroon";
+    statusDisplay.innerText = "Brown won by resignation.";
+    statusDisplay.style.color = "red";
 };
 
 function drawBoard() {
