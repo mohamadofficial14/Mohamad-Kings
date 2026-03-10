@@ -1,85 +1,97 @@
 let selectedSquare = null;
 let currentTurn = 'orange';
 let gameActive = true;
-
-// Keep track of board states for repetition
 let moveHistory = [];
 
 const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
 const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
 
-// Initial Game Setup
 let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
 gameState[0] = ['🚙', ' ', ' ', '🕍', '🤴', '🦄', ' ', ' ', ' ', '🚙'];
 gameState[1] = Array(10).fill('💂');
 gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
 gameState[8] = Array(10).fill('🛡️');
 
-// --- HELPER LOGIC ---
-function getRandomELO() {
-    return Math.floor(Math.random() * (15 - 5 + 1)) + 5;
-}
-
-function botSpeak(message) {
-    const speech = new SpeechSynthesisUtterance(message);
-    const voices = window.speechSynthesis.getVoices();
-    speech.voice = voices.find(v => v.lang.includes('en-GB')) || voices[0];
-    speech.pitch = 0.9;
-    speech.rate = 0.9;
-    window.speechSynthesis.speak(speech);
-}
-
-// --- RESIGN BUTTON ---
-document.getElementById('resign-btn').onclick = () => {
-    if (!gameActive) return;
-    gameActive = false;
-    const statusDisplay = document.getElementById('status');
-    statusDisplay.innerText = "Brown won by resignation.";
-    statusDisplay.style.color = "red";
-};
-
-function drawBoard() {
-    const boardElement = document.getElementById('game-board');
-    boardElement.innerHTML = '';
-    gameState.forEach((row, r) => {
-        row.forEach((piece, c) => {
-            const square = document.createElement('div');
-            square.className = `square ${(r + c) % 2 === 0 ? 'orange-sq' : 'brown-sq'}`;
-            square.innerText = piece;
-            if (selectedSquare && selectedSquare.row === r && selectedSquare.col === c) {
-                square.style.backgroundColor = "yellow"; 
+// --- NEW LOGIC: CHECK DETECTION ---
+function isSquareUnderAttack(tR, tC, attackerColor) {
+    const attackers = (attackerColor === 'orange') ? orangeTeam : brownTeam;
+    for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+            if (attackers.includes(gameState[r][c])) {
+                if (canPieceAttack(r, c, tR, tC)) return true;
             }
-            square.onclick = () => handleSquareClick(r, c);
-            boardElement.appendChild(square);
-        });
-    });
+        }
+    }
+    return false;
 }
 
-function checkRepetition() {
-    const currentState = JSON.stringify(gameState);
-    moveHistory.push(currentState);
-    const count = moveHistory.filter(s => s === currentState).length;
+function canPieceAttack(fR, fC, tR, tC) {
+    const piece = gameState[fR][fC];
+    const dr = Math.abs(tR - fR);
+    const dc = Math.abs(tC - fC);
+    if (piece === '🛡️' || piece === '💂') return dc === 0 && dr === 1;
+    if (piece === '👑' || piece === '🤴') return (dr <= 1 && dc <= 1);
+    if (piece === '🏎️' || piece === '🚙') return (dr <= 2 && dc <= 2);
+    if (piece === '🕌' || piece === '🕍') return ((dr <= 5 && dc === 0) || (dr === 0 && dc <= 5));
+    if (piece === '🐎' || piece === '🦄') return (dr <= 1 && dc <= 1);
+    return false;
+}
+
+function isCheckmate(color) {
+    const kingPiece = (color === 'orange') ? '👑' : '🤴';
+    let kR, kC;
+    gameState.forEach((row, r) => row.forEach((p, c) => { if (p === kingPiece) { kR = r; kC = c; } }));
     
-    if (count >= 3) {
-        gameActive = false;
-        const statusDisplay = document.getElementById('status');
-        statusDisplay.innerText = "Stalemate by Repetition";
-        statusDisplay.style.color = "red";
+    // Check if any legal move removes the check
+    for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+            if ((color === 'orange' ? orangeTeam : brownTeam).includes(gameState[r][c])) {
+                for (let tr = 0; tr < 10; tr++) {
+                    for (let tc = 0; tc < 10; tc++) {
+                        if (isValidMove(r, c, tr, tc)) {
+                            // Virtual move to see if still in check
+                            const temp = gameState[tr][tc];
+                            gameState[tr][tc] = gameState[r][c];
+                            gameState[r][c] = ' ';
+                            const stillInCheck = isSquareUnderAttack(kR, kC, color === 'orange' ? 'brown' : 'orange');
+                            gameState[r][c] = gameState[tr][tc]; // Undo
+                            gameState[tr][tc] = temp;
+                            if (!stillInCheck) return false;
+                        }
+                    }
+                }
+            }
+        }
     }
+    return true;
 }
 
 function handleSquareClick(row, col) {
     if (!gameActive) return;
     const piece = gameState[row][col];
-    
     if (!selectedSquare) {
-        if (piece === ' ') return;
-        if (currentTurn === 'orange' && !orangeTeam.includes(piece)) return;
-        if (currentTurn === 'brown' && !brownTeam.includes(piece)) return;
+        if (piece === ' ' || (currentTurn === 'orange' && !orangeTeam.includes(piece)) || (currentTurn === 'brown' && !brownTeam.includes(piece))) return;
         selectedSquare = { row, col };
         drawBoard();
     } else {
         if (isValidMove(selectedSquare.row, selectedSquare.col, row, col)) {
+            // Verify move doesn't leave own king in check
+            const temp = gameState[row][col];
+            gameState[row][col] = gameState[selectedSquare.row][selectedSquare.col];
+            gameState[selectedSquare.row][selectedSquare.col] = ' ';
+            
+            const myColor = currentTurn;
+            const king = myColor === 'orange' ? '👑' : '🤴';
+            let kR, kC;
+            gameState.forEach((r, i) => r.forEach((p, j) => { if (p === king) { kR = i; kC = j; } }));
+            
+            if (isSquareUnderAttack(kR, kC, myColor === 'orange' ? 'brown' : 'orange')) {
+                gameState[selectedSquare.row][selectedSquare.col] = gameState[row][col];
+                gameState[row][col] = temp;
+                selectedSquare = null;
+                drawBoard();
+                return;
+            }
             executeMove(row, col);
         } else {
             selectedSquare = null;
@@ -93,94 +105,41 @@ function isValidMove(fR, fC, tR, tC) {
     const target = gameState[tR][tC];
     const dr = Math.abs(tR - fR);
     const dc = Math.abs(tC - fC);
-
-    if (currentTurn === 'orange' && orangeTeam.includes(target)) return false;
-    if (currentTurn === 'brown' && brownTeam.includes(target)) return false;
+    if ((currentTurn === 'orange' && orangeTeam.includes(target)) || (currentTurn === 'brown' && brownTeam.includes(target))) return false;
     if (fR === tR && fC === tC) return false;
-
     if (piece === '🛡️' || piece === '💂') return dc === 0 && dr === 1;
-    if (piece === '👑' || piece === '🤴' || piece === '🏎️' || piece === '🚙') return (dr <= 2 && dc <= 2);
+    if (piece === '👑' || piece === '🤴') return (dr <= 1 && dc <= 1);
+    if (piece === '🏎️' || piece === '🚙') return (dr <= 2 && dc <= 2);
     if (piece === '🕌' || piece === '🕍') return ((dr <= 5 && dc === 0) || (dr === 0 && dc <= 5));
     if (piece === '🐎' || piece === '🦄') return (dr <= 1 && dc <= 1);
-    
     return false;
 }
 
 function executeMove(row, col) {
-    const fromRow = selectedSquare.row;
-    const fromCol = selectedSquare.col;
-    const movingPiece = gameState[fromRow][fromCol];
-    const pieceOnTarget = gameState[row][col];
-    const statusDisplay = document.getElementById('status');
-
-    if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
-       gameActive = false;
-       const eloChange = getRandomELO(); // Generate the random ELO!
-       
-       if (currentTurn === 'brown') {
-           statusDisplay.innerText = `Brown fallmated you! -${eloChange} ELO points.`;
-           statusDisplay.style.color = "red";
-           botSpeak("Dear Diary, today I won another match.");
-           setTimeout(() => botSpeak("You didn't give up and that shows courage."), 3000);
-       } else {
-           statusDisplay.innerText = `Fallmate. Orange Wins! +${eloChange} ELO points added.`;
-           statusDisplay.style.color = "orange";
-       }
-    }
-
-    gameState[row][col] = movingPiece;
-    gameState[fromRow][fromCol] = ' ';
-    
-    if (gameActive) {
-        checkRepetition();
-    }
-    
-    if (gameActive) {
-        currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
-        statusDisplay.innerText = currentTurn === 'orange' ? "Orange's Turn" : "Brown is thinking...";
-    }
-    
+    gameState[row][col] = gameState[selectedSquare.row][selectedSquare.col];
+    gameState[selectedSquare.row][selectedSquare.col] = ' ';
     selectedSquare = null;
-    drawBoard();
-
-    if (gameActive && currentTurn === 'brown') {
-        setTimeout(makeSmartAIMove, 600); 
-    }
-}
-
-// --- AI LOGIC ---
-function makeSmartAIMove() {
-    let possibleMoves = [];
     
-    for (let r = 0; r < 10; r++) {
-        for (let c = 0; c < 10; c++) {
-            if (brownTeam.includes(gameState[r][c])) {
-                for (let tr = 0; tr < 10; tr++) {
-                    for (let tc = 0; tc < 10; tc++) {
-                        if (isValidMove(r, c, tr, tc)) {
-                            let score = 0;
-                            const targetPiece = gameState[tr][tc];
-                            
-                            if (targetPiece === '👑') score = 1000;
-                            else if (orangeTeam.includes(targetPiece)) score = 10;
-                            
-                            possibleMoves.push({fR: r, fC: c, tR: tr, tC: tc, score: score});
-                        }
-                    }
-                }
-            }
+    const opponent = currentTurn === 'orange' ? 'brown' : 'orange';
+    const king = opponent === 'orange' ? '👑' : '🤴';
+    let kR, kC;
+    gameState.forEach((r, i) => r.forEach((p, j) => { if (p === king) { kR = i; kC = j; } }));
+
+    if (isSquareUnderAttack(kR, kC, currentTurn)) {
+        if (isCheckmate(opponent)) {
+            gameActive = false;
+            document.getElementById('status').innerText = currentTurn === 'orange' ? "Checkmate!" : "Brown checkmated you!";
+            document.getElementById('status').style.color = currentTurn === 'orange' ? "lime" : "red";
+        } else {
+            document.getElementById('status').innerText = `${opponent.charAt(0).toUpperCase() + opponent.slice(1)} is in check!`;
         }
+    } else {
+        currentTurn = opponent;
+        document.getElementById('status').innerText = `${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}'s Turn`;
     }
-
-    if (possibleMoves.length > 0) {
-        const maxScore = Math.max(...possibleMoves.map(m => m.score));
-        const bestMoves = possibleMoves.filter(m => m.score === maxScore);
-        const chosenMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-
-        selectedSquare = { row: chosenMove.fR, col: chosenMove.fC };
-        executeMove(chosenMove.tR, chosenMove.tC);
-    }
+    
+    drawBoard();
+    if (gameActive && currentTurn === 'brown') setTimeout(makeSmartAIMove, 600);
 }
 
-window.speechSynthesis.getVoices();
-drawBoard();
+// ... Keep existing drawBoard, botSpeak, and makeSmartAIMove functions ...
