@@ -115,16 +115,34 @@ function executeMove(row, col) {
 
     if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
        gameActive = false;
-       const eloChange = getRandomELO(); // Generate the random ELO!
+       const eloChange = getRandomELO();
        
        if (currentTurn === 'brown') {
            statusDisplay.innerText = `Brown fallmated you! -${eloChange} ELO points.`;
            statusDisplay.style.color = "red";
            botSpeak("Dear Diary, today I won another match.");
            setTimeout(() => botSpeak("You didn't give up and that shows courage."), 3000);
+
+           // Remove all Orange pieces from the board
+           for (let r = 0; r < 10; r++) {
+               for (let c = 0; c < 10; c++) {
+                   if (orangeTeam.includes(gameState[r][c])) {
+                       gameState[r][c] = ' ';
+                   }
+               }
+           }
        } else {
            statusDisplay.innerText = `Fallmate. Orange Wins! +${eloChange} ELO points added.`;
            statusDisplay.style.color = "orange";
+
+           // Remove all Brown pieces from the board
+           for (let r = 0; r < 10; r++) {
+               for (let c = 0; c < 10; c++) {
+                   if (brownTeam.includes(gameState[r][c])) {
+                       gameState[r][c] = ' ';
+                   }
+               }
+           }
        }
     }
 
