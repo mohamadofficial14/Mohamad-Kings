@@ -135,7 +135,7 @@ function executeMove(row, col) {
            statusDisplay.innerText = `Brown checkmated you! -${eloChange} ELO points.`;
            statusDisplay.style.color = "red";
            botSpeak("I say, I do love making your king go boom. Absolute rubbish play from you.");
-           setTimeout(() => botSpeak("Way to tough it out, old sport. I respect that. Truly."), 3500);
+           setTimeout(() => botSpeak("Get better."), 3500);
 
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
