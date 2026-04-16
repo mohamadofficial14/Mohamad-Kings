@@ -132,7 +132,8 @@ function executeMove(row, col) {
        const eloChange = getRandomELO();
        
        if (currentTurn === 'brown') {
-           statusDisplay.innerText = `Brown checkmated you! -${eloChange} ELO points.`;
+           statusDisplay.innerText = `Brown checkmated you! -${eloChange} ELO points.
+           What was that blunder??`;
            statusDisplay.style.color = "red";
            botSpeak("I say, I do love making your king go boom. Absolute rubbish play from you.");
            setTimeout(() => botSpeak("Get better."), 3500);
@@ -145,7 +146,7 @@ function executeMove(row, col) {
                }
            }
        } else {
-           statusDisplay.innerText = `Checkmate!+${eloChange} ELO points added.`;
+           statusDisplay.innerText = `Checkmate! +${eloChange} ELO points added.`;
            statusDisplay.style.color = "orange";
 
            for (let r = 0; r < 10; r++) {
