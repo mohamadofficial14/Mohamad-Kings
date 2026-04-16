@@ -20,27 +20,42 @@ function getRandomELO() {
     return Math.floor(Math.random() * (15 - 5 + 1)) + 5;
 }
 
-// --- UPDATED BRITISH BOT LOGIC ---
 function botSpeak(message) {
     const speech = new SpeechSynthesisUtterance(message);
     const voices = window.speechSynthesis.getVoices();
-    
-    // Look for a British English voice specifically
-    // We try to find "Male" in the name for that 'Guy' feel
     let britishVoice = voices.find(v => v.lang === 'en-GB' && v.name.includes('Male'));
-    
-    // Fallback to any British voice if Male isn't found
     if (!britishVoice) {
         britishVoice = voices.find(v => v.lang === 'en-GB');
     }
-
     if (britishVoice) {
         speech.voice = britishVoice;
     }
-
-    speech.pitch = 0.8; // Slightly lower pitch for a more masculine tone
-    speech.rate = 1.0;  // Standard speed
+    speech.pitch = 0.8; 
+    speech.rate = 1.0;  
     window.speechSynthesis.speak(speech);
+}
+
+// Check if only kings are left
+function checkInsufficientMaterial() {
+    let pieceCount = 0;
+    for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+            if (gameState[r][c] !== ' ') {
+                pieceCount++;
+            }
+        }
+    }
+
+    // If only 2 pieces are left, they must be the kings
+    if (pieceCount === 2) {
+        gameActive = false;
+        const statusDisplay = document.getElementById('status');
+        statusDisplay.innerText = "This is a draw!";
+        statusDisplay.style.color = "yellow";
+        botSpeak("Draw! We can't checkmate with these measly pieces.");
+        return true;
+    }
+    return false;
 }
 
 // --- RESIGN BUTTON ---
@@ -162,6 +177,11 @@ function executeMove(row, col) {
     gameState[row][col] = movingPiece;
     gameState[fromRow][fromCol] = ' ';
     
+    // Check for draw by insufficient material
+    if (gameActive) {
+        checkInsufficientMaterial();
+    }
+
     if (gameActive) {
         checkRepetition();
     }
@@ -179,7 +199,6 @@ function executeMove(row, col) {
     }
 }
 
-// --- AI LOGIC ---
 function makeSmartAIMove() {
     let possibleMoves = [];
     
@@ -213,7 +232,6 @@ function makeSmartAIMove() {
     }
 }
 
-// Initial load of voices
 window.speechSynthesis.onvoiceschanged = () => {
     window.speechSynthesis.getVoices();
 };
