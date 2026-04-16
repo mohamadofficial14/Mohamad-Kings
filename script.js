@@ -20,12 +20,26 @@ function getRandomELO() {
     return Math.floor(Math.random() * (15 - 5 + 1)) + 5;
 }
 
+// --- UPDATED BRITISH BOT LOGIC ---
 function botSpeak(message) {
     const speech = new SpeechSynthesisUtterance(message);
     const voices = window.speechSynthesis.getVoices();
-    speech.voice = voices.find(v => v.lang.includes('en-GB')) || voices[0];
-    speech.pitch = 0.9;
-    speech.rate = 0.9;
+    
+    // Look for a British English voice specifically
+    // We try to find "Male" in the name for that 'Guy' feel
+    let britishVoice = voices.find(v => v.lang === 'en-GB' && v.name.includes('Male'));
+    
+    // Fallback to any British voice if Male isn't found
+    if (!britishVoice) {
+        britishVoice = voices.find(v => v.lang === 'en-GB');
+    }
+
+    if (britishVoice) {
+        speech.voice = britishVoice;
+    }
+
+    speech.pitch = 0.8; // Slightly lower pitch for a more masculine tone
+    speech.rate = 1.0;  // Standard speed
     window.speechSynthesis.speak(speech);
 }
 
@@ -34,7 +48,7 @@ document.getElementById('resign-btn').onclick = () => {
     if (!gameActive) return;
     gameActive = false;
     const statusDisplay = document.getElementById('status');
-    statusDisplay.innerText = "Brown won by resignation.";
+    statusDisplay.innerText = "Match Resigned.";
     statusDisplay.style.color = "red";
 };
 
@@ -118,12 +132,11 @@ function executeMove(row, col) {
        const eloChange = getRandomELO();
        
        if (currentTurn === 'brown') {
-           statusDisplay.innerText = `Brown fallmated you! -${eloChange} ELO points.`;
+           statusDisplay.innerText = `Brown checkmated you! -${eloChange} ELO points.`;
            statusDisplay.style.color = "red";
-           botSpeak("Dear Diary, today I won another match.");
-           setTimeout(() => botSpeak("You didn't give up and that shows courage."), 3000);
+           botSpeak("I say, I do love making your king go boom. Absolute rubbish play from you.");
+           setTimeout(() => botSpeak("Way to tough it out, old sport. I respect that. Truly."), 3500);
 
-           // Remove all Orange pieces from the board
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
                    if (orangeTeam.includes(gameState[r][c])) {
@@ -132,10 +145,9 @@ function executeMove(row, col) {
                }
            }
        } else {
-           statusDisplay.innerText = `Fallmate. Orange Wins! +${eloChange} ELO points added.`;
+           statusDisplay.innerText = `Checkmate!+${eloChange} ELO points added.`;
            statusDisplay.style.color = "orange";
 
-           // Remove all Brown pieces from the board
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
                    if (brownTeam.includes(gameState[r][c])) {
@@ -200,5 +212,9 @@ function makeSmartAIMove() {
     }
 }
 
-window.speechSynthesis.getVoices();
+// Initial load of voices
+window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+};
+
 drawBoard();
