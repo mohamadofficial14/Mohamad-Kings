@@ -163,7 +163,8 @@ function executeMove(row, col) {
        } else {
            statusDisplay.innerText = `Checkmate! +${eloChange} ELO points added.`;
            statusDisplay.style.color = "orange";
-
+botSpeak("If you checkmate me one more time, I will put your System32 Folder to My personal Recycle Bin.");
+           
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
                    if (brownTeam.includes(gameState[r][c])) {
