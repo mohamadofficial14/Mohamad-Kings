@@ -151,7 +151,7 @@ function executeMove(row, col) {
            What was that blunder??`;
            statusDisplay.style.color = "red";
            botSpeak("I say, I do love making your king go boom. Absolute rubbish play from you.");
-           setTimeout(() => botSpeak("Get better."), 3500);
+           setTimeout(() => botSpeak("You make losing look so good!"), 3500);
 
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
@@ -163,7 +163,7 @@ function executeMove(row, col) {
        } else {
            statusDisplay.innerText = `Checkmate! +${eloChange} ELO points added.`;
            statusDisplay.style.color = "orange";
-botSpeak("If you checkmate me one more time, I will put your System32 Folder to My personal Recycle Bin.");
+botSpeak("Maybe I need more spark and less bark."); 
            
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
