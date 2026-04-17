@@ -163,7 +163,7 @@ function executeMove(row, col) {
        } else {
            statusDisplay.innerText = `Checkmate! +${eloChange} ELO points added.`;
            statusDisplay.style.color = "orange";
-botSpeak("Maybe I need more spark and less bark."); 
+botSpeak("Maybe I need more sparking and less barking."); 
            
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
