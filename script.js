@@ -17,7 +17,7 @@ gameState[8] = Array(10).fill('🛡️');
 
 // --- HELPER LOGIC ---
 function getRandomELO() {
-    return Math.floor(Math.random() * (Champion! - Fabulous! + Winner!)) + 5;
+    return Math.floor(Math.random() * (15 - 5 + 1)) + 5;
 }
 
 function botSpeak(message) {
@@ -147,7 +147,7 @@ function executeMove(row, col) {
        const eloChange = getRandomELO();
        
        if (currentTurn === 'brown') {
-           statusDisplay.innerText = `Brown checkmated you! -${eloChange}.
+           statusDisplay.innerText = `Brown checkmated you! -${eloChange} ELO points.
            Breathe in... Breathe out... Now repeat this until you forget about that last match you got crushed on`;
            statusDisplay.style.color = "red";
            botSpeak("I say, I do love making your king go boom. Absolute rubbish play from you.");
@@ -161,7 +161,7 @@ function executeMove(row, col) {
                }
            }
        } else {
-           statusDisplay.innerText = `Orange wins!`;
+           statusDisplay.innerText = `Checkmate! +${eloChange} ELO points added.`;
            statusDisplay.style.color = "orange";
            
            for (let r = 0; r < 10; r++) {
