@@ -147,10 +147,9 @@ function executeMove(row, col) {
        const eloChange = getRandomELO();
        
        if (currentTurn === 'brown') {
-           statusDisplay.innerText = `Brown checkmated you! -${eloChange} ELO points.
-           Breathe in... Breathe out... Now repeat this until you forget about that last match you got crushed on`;
+           statusDisplay.innerText = `Brown emptied your Recycle Bin!`;
            statusDisplay.style.color = "red";
-           botSpeak("I say, I do love making your king go boom. Absolute rubbish play from you.");
+           botSpeak("I love making your king go boom. Absolute rubbish play from you.");
            setTimeout(() => botSpeak("You make losing look so good!"), 3500);
 
            for (let r = 0; r < 10; r++) {
@@ -161,8 +160,10 @@ function executeMove(row, col) {
                }
            }
        } else {
-           statusDisplay.innerText = `Checkmate! +${eloChange} ELO points added.`;
-           statusDisplay.style.color = "orange";
+           statusDisplay.innerText = `You emptied their Windows Recycle Bin!
+           
+           Don't ask me how, but you did it! 🎊 🎉 🙌 `;
+           statusDisplay.style.color = "green";
            
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
