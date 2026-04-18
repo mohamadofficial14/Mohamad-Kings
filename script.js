@@ -148,7 +148,7 @@ function executeMove(row, col) {
        
        if (currentTurn === 'brown') {
            statusDisplay.innerText = `Brown checkmated you! -${eloChange} ELO points.
-           What was that blunder??`;
+           Breathe in... Breathe out... Now repeat this until you forget about that last match you got crushed on`;
            statusDisplay.style.color = "red";
            botSpeak("I say, I do love making your king go boom. Absolute rubbish play from you.");
            setTimeout(() => botSpeak("You make losing look so good!"), 3500);
