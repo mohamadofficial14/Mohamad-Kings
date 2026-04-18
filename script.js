@@ -149,8 +149,8 @@ function executeMove(row, col) {
        if (currentTurn === 'brown') {
            statusDisplay.innerText = `Brown emptied your Recycle Bin!`;
            statusDisplay.style.color = "red";
-           botSpeak("I love making your king go boom. Absolute rubbish play from you.");
-           setTimeout(() => botSpeak("You make losing look so good!"), 3500);
+           botSpeak("Honestly? I thought you had me there.");
+           setTimeout(() => botSpeak("Hahahahahahahaha"), 3500);
 
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
@@ -163,7 +163,7 @@ function executeMove(row, col) {
            statusDisplay.innerText = `You emptied their Windows Recycle Bin!
            
            Don't ask me how, but you did it! 🎊 🎉 🙌 `;
-           statusDisplay.style.color = "green";
+           statusDisplay.style.color = "lime";
            
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
