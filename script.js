@@ -63,7 +63,7 @@ document.getElementById('resign-btn').onclick = () => {
     if (!gameActive) return;
     gameActive = false;
     const statusDisplay = document.getElementById('status');
-    statusDisplay.innerText = "Match Resigned.";
+    statusDisplay.innerText = "Match Resigned. Cowardly play from you.";
     statusDisplay.style.color = "red";
 };
 
