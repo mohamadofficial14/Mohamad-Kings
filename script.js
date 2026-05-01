@@ -63,7 +63,7 @@ document.getElementById('resign-btn').onclick = () => {
     if (!gameActive) return;
     gameActive = false;
     const statusDisplay = document.getElementById('status');
-    statusDisplay.innerText = "Match Resigned. Cowardly play from you.";
+    statusDisplay.innerText = "Match resigned.";
     statusDisplay.style.color = "red";
 };
 
@@ -93,7 +93,7 @@ function checkRepetition() {
         gameActive = false;
         const statusDisplay = document.getElementById('status');
         statusDisplay.innerText = "Stalemate by Repetition";
-        statusDisplay.style.color = "red";
+        statusDisplay.style.color = "yellow";
     }
 }
 
@@ -147,7 +147,8 @@ function executeMove(row, col) {
        const eloChange = getRandomELO();
        
        if (currentTurn === 'brown') {
-           statusDisplay.innerText = `Brown emptied your Recycle Bin!`;
+           statusDisplay.innerHTML = '<b>Toasted.</b>
+               Feel the heat? Sorry for those red hot moves!';
            statusDisplay.style.color = "red";
            botSpeak("Honestly? I thought you had me there.");
            setTimeout(() => botSpeak("Hahahahahahahaha"), 3500);
