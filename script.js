@@ -147,8 +147,8 @@ function executeMove(row, col) {
        const eloChange = getRandomELO();
        
        if (currentTurn === 'brown') {
-           statusDisplay.innerHTML = '<b>Toasted.</b>
-               Feel the heat? Sorry for those red hot moves!';
+           statusDisplay.innerHTML = "<b>Toasted.</b>
+               Feel the heat? Sorry for those red hot moves!";
            statusDisplay.style.color = "red";
            botSpeak("Honestly? I thought you had me there.");
            setTimeout(() => botSpeak("Hahahahahahahaha"), 3500);
