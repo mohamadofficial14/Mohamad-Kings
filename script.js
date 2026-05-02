@@ -84,25 +84,57 @@ function drawBoard() {
     });
 }
 
-// Optimized Repetition Check
 function checkRepetition() {
     const currentState = JSON.stringify(gameState);
     moveHistory.push(currentState);
-    
-    // Only look at the last 12 moves for efficiency (standard for 3-fold)
-    const recentHistory = moveHistory.slice(-20);
-    const count = recentHistory.filter(s => s === currentState).length;
+    const count = moveHistory.filter(s => s === currentState).length;
     
     if (count >= 3) {
         gameActive = false;
         const statusDisplay = document.getElementById('status');
-        statusDisplay.innerText = "Stalemate: The Infinite Loop!";
+        statusDisplay.innerText = "Stalemate by Repetition";
         statusDisplay.style.color = "yellow";
-        botSpeak("We're going in circles, mate. Call it a draw?");
     }
 }
 
-// Enhanced Win Condition (The "Toasted" Sequence)
+function handleSquareClick(row, col) {
+    if (!gameActive) return;
+    const piece = gameState[row][col];
+    
+    if (!selectedSquare) {
+        if (piece === ' ') return;
+        if (currentTurn === 'orange' && !orangeTeam.includes(piece)) return;
+        if (currentTurn === 'brown' && !brownTeam.includes(piece)) return;
+        selectedSquare = { row, col };
+        drawBoard();
+    } else {
+        if (isValidMove(selectedSquare.row, selectedSquare.col, row, col)) {
+            executeMove(row, col);
+        } else {
+            selectedSquare = null;
+            drawBoard();
+        }
+    }
+}
+
+function isValidMove(fR, fC, tR, tC) {
+    const piece = gameState[fR][fC];
+    const target = gameState[tR][tC];
+    const dr = Math.abs(tR - fR);
+    const dc = Math.abs(tC - fC);
+
+    if (currentTurn === 'orange' && orangeTeam.includes(target)) return false;
+    if (currentTurn === 'brown' && brownTeam.includes(target)) return false;
+    if (fR === tR && fC === tC) return false;
+
+    if (piece === '🛡️' || piece === '💂') return dc === 0 && dr === 1;
+    if (piece === '👑' || piece === '🤴' || piece === '🏎️' || piece === '🚙') return (dr <= 2 && dc <= 2);
+    if (piece === '🕌' || piece === '🕍') return ((dr <= 5 && dc === 0) || (dr === 0 && dc <= 5));
+    if (piece === '🐎' || piece === '🦄') return (dr <= 1 && dc <= 1);
+    
+    return false;
+}
+
 function executeMove(row, col) {
     const fromRow = selectedSquare.row;
     const fromCol = selectedSquare.col;
@@ -112,56 +144,36 @@ function executeMove(row, col) {
 
     if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
        gameActive = false;
+       const eloChange = getRandomELO();
        
        if (currentTurn === 'brown') {
-           // AI WINS
-           statusDisplay.innerHTML = "<b>TOASTED.</b> 🔥<br>Feel the heat? That's just my CPU winning.";
-           statusDisplay.style.color = "#FF4500"; // Deeper orange-red
+           statusDisplay.innerHTML = "<b>Toasted.</b> Feel the heat? Sorry for those red hot moves!";
+           statusDisplay.style.color = "red";
            botSpeak("Honestly? I thought you had me there.");
-           
-           // Delayed laugh for maximum emotional damage
-           setTimeout(() => botSpeak("Hahahahaha. Better luck next time, human."), 2500);
+           setTimeout(() => botSpeak("Hahahahahahahaha"), 3500);
 
-           clearTeam('orange');
+           for (let r = 0; r < 10; r++) {
+               for (let c = 0; c < 10; c++) {
+                   if (orangeTeam.includes(gameState[r][c])) {
+                       gameState[r][c] = ' ';
+                   }
+               }
+           }
        } else {
-           // PLAYER WINS
-           statusDisplay.innerHTML = "<b>Recycle Bin Emptied!</b> 🗑️<br>System clean. You actually won!";
-           statusDisplay.style.color = "#00FF00";
-           botSpeak("Wait... was that a legal move? My circuits hurt.");
+           statusDisplay.innerText = `You emptied their Windows Recycle Bin!
            
-           clearTeam('brown');
+           Don't ask me how, but you did it! 🎊 🎉 🙌 `;
+           statusDisplay.style.color = "lime";
+           
+           for (let r = 0; r < 10; r++) {
+               for (let c = 0; c < 10; c++) {
+                   if (brownTeam.includes(gameState[r][c])) {
+                       gameState[r][c] = ' ';
+                   }
+               }
+           }
        }
     }
-
-    gameState[row][col] = movingPiece;
-    gameState[fromRow][fromCol] = ' ';
-    
-    // UI Update
-    if (gameActive) {
-        checkInsufficientMaterial();
-        checkRepetition();
-        currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
-        statusDisplay.innerText = currentTurn === 'orange' ? "Your Move!" : "AI is calculating your demise...";
-    }
-    
-    selectedSquare = null;
-    drawBoard();
-
-    if (gameActive && currentTurn === 'brown') {
-        setTimeout(makeSmartAIMove, 800); 
-    }
-}
-
-// Helper to clear the losers off the board
-function clearTeam(teamColor) {
-    const teamSet = teamColor === 'orange' ? orangeTeam : brownTeam;
-    for (let r = 0; r < 10; r++) {
-        for (let c = 0; c < 10; c++) {
-            if (teamSet.includes(gameState[r][c])) gameState[r][c] = ' ';
-        }
-    }
-}
-
 
     gameState[row][col] = movingPiece;
     gameState[fromRow][fromCol] = ' ';
