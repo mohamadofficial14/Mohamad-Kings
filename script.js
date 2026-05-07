@@ -46,7 +46,6 @@ function checkInsufficientMaterial() {
         }
     }
 
-    // If only 2 pieces are left, they must be the kings
     if (pieceCount === 2) {
         gameActive = false;
         const statusDisplay = document.getElementById('status');
@@ -127,9 +126,19 @@ function isValidMove(fR, fC, tR, tC) {
     if (currentTurn === 'brown' && brownTeam.includes(target)) return false;
     if (fR === tR && fC === tC) return false;
 
+    // Shield/Guard (Pawns)
     if (piece === '🛡️' || piece === '💂') return dc === 0 && dr === 1;
-    if (piece === '👑' || piece === '🤴' || piece === '🏎️' || piece === '🚙') return (dr <= 2 && dc <= 2);
+
+    // Kings - MOVES 1 SQUARE ONLY
+    if (piece === '👑' || piece === '🤴') return (dr <= 1 && dc <= 1);
+
+    // Cars - MOVES UP TO 2 SQUARES
+    if (piece === '🏎️' || piece === '🚙') return (dr <= 2 && dc <= 2);
+
+    // Mosques/Temples (Rooks-ish)
     if (piece === '🕌' || piece === '🕍') return ((dr <= 5 && dc === 0) || (dr === 0 && dc <= 5));
+
+    // Horses/Unicorns (Knights-ish)
     if (piece === '🐎' || piece === '🦄') return (dr <= 1 && dc <= 1);
     
     return false;
@@ -144,8 +153,6 @@ function executeMove(row, col) {
 
     if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
        gameActive = false;
-       const eloChange = getRandomELO();
-       
        if (currentTurn === 'brown') {
            statusDisplay.innerHTML = "<b>Toasted.</b> Feel the heat? Sorry for those red hot moves!";
            statusDisplay.style.color = "red";
@@ -154,22 +161,16 @@ function executeMove(row, col) {
 
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
-                   if (orangeTeam.includes(gameState[r][c])) {
-                       gameState[r][c] = ' ';
-                   }
+                   if (orangeTeam.includes(gameState[r][c])) gameState[r][c] = ' ';
                }
            }
        } else {
-           statusDisplay.innerText = `You emptied their Windows Recycle Bin!
-           
-           Don't ask me how, but you did it! 🎊 🎉 🙌 `;
+           statusDisplay.innerText = `You emptied their Windows Recycle Bin! Don't ask me how, but you did it! 🎊 🎉 🙌 `;
            statusDisplay.style.color = "lime";
            
            for (let r = 0; r < 10; r++) {
                for (let c = 0; c < 10; c++) {
-                   if (brownTeam.includes(gameState[r][c])) {
-                       gameState[r][c] = ' ';
-                   }
+                   if (brownTeam.includes(gameState[r][c])) gameState[r][c] = ' ';
                }
            }
        }
@@ -178,14 +179,8 @@ function executeMove(row, col) {
     gameState[row][col] = movingPiece;
     gameState[fromRow][fromCol] = ' ';
     
-    // Check for draw by insufficient material
-    if (gameActive) {
-        checkInsufficientMaterial();
-    }
-
-    if (gameActive) {
-        checkRepetition();
-    }
+    if (gameActive) checkInsufficientMaterial();
+    if (gameActive) checkRepetition();
     
     if (gameActive) {
         currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
