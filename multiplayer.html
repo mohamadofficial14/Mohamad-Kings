@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mohamad Kings 👑</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>MOHAMAD KINGS</h1>
+  <div id="game-board"></div>
+  
+  <div id="status">Orange's Turn (البرتقالي)</div>
+  
+  <div id="notice" style="font-weight: bold; font-size: 1.8rem; margin: 15px 0; min-height: 2rem;"></div>
+
+  <button id="restart-btn" onclick="location.reload()">RESTART GAME 🔄</button>
+<button id="resign-btn">Resign</button>
+  <div id="rules-section" style="margin-top: 30px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+    <h2 style="color: #FF8C00;">📜 THE REVOLUTIONARY RULES</h2>
+    <ul>
+      <li><strong>No Stalemates:</strong> We don't do draws here. If the King is captured, it’s <strong>FALLMATE</strong>. Game over. 👑🏆</li>
+      <li><strong>The Soldier (🛡️):</strong> Moves up to 2 squares forward. Captures <strong>vertically forward</strong> (1 square). No diagonal "shy" moves! 👊</li>
+      <li><strong>The Vice President (💎):</strong> When a Soldier reaches the enemy's home row, he eats too much Shawarma, becomes the Vice President, and gains massive power (but is too heavy for horses). 🌯</li>
+      <li><strong>The Car (🏎️):</strong> High speed, but respects traffic. Moves up to 5 squares. 💨</li>
+      <li><strong>The Minister (🕌):</strong> A spiritual powerhouse. Moves up to 6 squares vertically.</li>
+      <li><strong>The Horse (🐎):</strong> The Infinite Galloper. No teleportation limits. Landing a Soldier on a Horse creates a <strong>Cavalry Unit (🏇)</strong>.</li>
+      <li><strong>The King (👑):</strong> Majestic but steady. Moves up to 2 squares in any direction.</li>
+    </ul>
+  </div>
+
+  <scriptlet selectedSquare = null;
+let currentTurn = 'orange';
+let gameActive = true;
+let moveHistory = [];
+
+const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
+const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
+
+// Initial Game Setup
+let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
+gameState[0] = ['🚙', ' ', ' ', '🕍', '🤴', '🦄', ' ', ' ', ' ', '🚙'];
+gameState[1] = Array(10).fill('💂');
+gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
+gameState[8] = Array(10).fill('🛡️');
+
+// --- STALEMATE SCANNER ---
+function canPlayerMove(playerColor) {
+    const team = (playerColor === 'orange') ? orangeTeam : brownTeam;
+    for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+            if (team.includes(gameState[r][c])) {
+                for (let tr = 0; tr < 10; tr++) {
+                    for (let tc = 0; tc < 10; tc++) {
+                        if (isValidMove(r, c, tr, tc)) return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function botSpeak(message) {
+    const speech = new SpeechSynthesisUtterance(message);
+    window.speechSynthesis.speak(speech);
+}
+
+function endGame(msg, color) {
+    gameActive = false;
+    const statusDisplay = document.getElementById('status');
+    statusDisplay.innerText = msg;
+    statusDisplay.style.color = color;
+    botSpeak(msg);
+}
+
+function drawBoard() {
+    const boardElement = document.getElementById('game-board');
+    boardElement.innerHTML = '';
+    gameState.forEach((row, r) => {
+        row.forEach((piece, c) => {
+            const square = document.createElement('div');
+            square.className = `square ${(r + c) % 2 === 0 ? 'orange-sq' : 'brown-sq'}`;
+            square.innerText = piece;
+            if (selectedSquare && selectedSquare.row === r && selectedSquare.col === c) {
+                square.style.backgroundColor = "yellow"; 
+            }
+            square.onclick = () => handleSquareClick(r, c);
+            boardElement.appendChild(square);
+        });
+    });
+}
+
+function handleSquareClick(row, col) {
+    if (!gameActive) return;
+    const piece = gameState[row][col];
+    
+    if (!selectedSquare) {
+        // Only allow clicking pieces belonging to the current player
+        if (piece === ' ') return;
+        if (currentTurn === 'orange' && !orangeTeam.includes(piece)) return;
+        if (currentTurn === 'brown' && !brownTeam.includes(piece)) return;
+        
+        selectedSquare = { row, col };
+        drawBoard();
+    } else {
+        if (isValidMove(selectedSquare.row, selectedSquare.col, row, col)) {
+            executeMove(row, col);
+        } else {
+            selectedSquare = null;
+            drawBoard();
+        }
+    }
+}
+
+function isValidMove(fR, fC, tR, tC) {
+    const piece = gameState[fR][fC];
+    const target = gameState[tR][tC];
+    const dr = Math.abs(tR - fR), dc = Math.abs(tC - fC);
+
+    if ((currentTurn === 'orange' && orangeTeam.includes(target)) || 
+        (currentTurn === 'brown' && brownTeam.includes(target)) || 
+        (fR === tR && fC === tC)) return false;
+
+    // Movement Rules
+    if (piece === '🛡️' || piece === '💂') return dc === 0 && dr === 1;
+    if (piece === '👑' || piece === '🤴') return (dr <= 1 && dc <= 1);
+    if (piece === '🏎️' || piece === '🚙') return (dr <= 2 && dc <= 2);
+    if (piece === '🕌' || piece === '🕍') return ((dr <= 5 && dc === 0) || (dr === 0 && dc <= 5));
+    if (piece === '🐎' || piece === '🦄') return (dr <= 1 && dc <= 1);
+    return false;
+}
+
+function executeMove(row, col) {
+    const fromRow = selectedSquare.row, fromCol = selectedSquare.col;
+    const movingPiece = gameState[fromRow][fromCol], pieceOnTarget = gameState[row][col];
+    const statusDisplay = document.getElementById('status');
+
+    // Win Condition: Capture King
+    if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
+       endGame(`${currentTurn.toUpperCase()} wins by capturing the King!`, "lime");
+    }
+
+    gameState[row][col] = movingPiece;
+    gameState[fromRow][fromCol] = ' ';
+    
+    if (gameActive) {
+        // Toggle Turn
+        currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
+        
+        // Stalemate Check: If the NEW current player has no moves, it's a draw.
+        if (!canPlayerMove(currentTurn)) {
+            endGame("Stalemate! No legal moves for " + currentTurn, "cyan");
+        } else {
+            statusDisplay.innerText = `${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}'s Turn`;
+        }
+    }
+    
+    selectedSquare = null;
+    drawBoard();
+}
+
+drawBoard();
+</script>
+</body>
+</html> 
