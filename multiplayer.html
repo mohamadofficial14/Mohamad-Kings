@@ -4,8 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mohamad Kings 👑</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Adding basic CSS so the board actually appears! */
+    body { background: #222; color: white; text-align: center; font-family: sans-serif; }
+    #game-board { 
+      display: grid; 
+      grid-template-columns: repeat(10, 40px); 
+      grid-template-rows: repeat(10, 40px); 
+      gap: 1px; 
+      justify-content: center; 
+      margin: 20px auto;
+      border: 5px solid #444;
+    }
+    .square { 
+      width: 40px; height: 40px; 
+      display: flex; align-items: center; justify-content: center; 
+      font-size: 1.5rem; cursor: pointer; 
+    }
+    .orange-sq { background-color: #d18b47; }
+    .brown-sq { background-color: #ffce9e; }
+    #status { font-size: 1.5rem; margin: 10px; font-weight: bold; }
+    button { padding: 10px 20px; font-size: 1rem; cursor: pointer; margin: 5px; }
+  </style>
 </head>
 <body>
   <h1>MOHAMAD KINGS</h1>
@@ -13,39 +33,34 @@
   
   <div id="status">Orange's Turn (البرتقالي)</div>
   
-  <div id="notice" style="font-weight: bold; font-size: 1.8rem; margin: 15px 0; min-height: 2rem;"></div>
-
   <button id="restart-btn" onclick="location.reload()">RESTART GAME 🔄</button>
-<button id="resign-btn">Resign</button>
+  <button id="resign-btn" onclick="alert('No resigning in Mohamad Kings!')">Resign</button>
+
   <div id="rules-section" style="margin-top: 30px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
     <h2 style="color: #FF8C00;">📜 THE REVOLUTIONARY RULES</h2>
     <ul>
-      <li><strong>No Stalemates:</strong> We don't do draws here. If the King is captured, it’s <strong>FALLMATE</strong>. Game over. 👑🏆</li>
-      <li><strong>The Soldier (🛡️):</strong> Moves up to 2 squares forward. Captures <strong>vertically forward</strong> (1 square). No diagonal "shy" moves! 👊</li>
-      <li><strong>The Vice President (💎):</strong> When a Soldier reaches the enemy's home row, he eats too much Shawarma, becomes the Vice President, and gains massive power (but is too heavy for horses). 🌯</li>
-      <li><strong>The Car (🏎️):</strong> High speed, but respects traffic. Moves up to 5 squares. 💨</li>
-      <li><strong>The Minister (🕌):</strong> A spiritual powerhouse. Moves up to 6 squares vertically.</li>
-      <li><strong>The Horse (🐎):</strong> The Infinite Galloper. No teleportation limits. Landing a Soldier on a Horse creates a <strong>Cavalry Unit (🏇)</strong>.</li>
-      <li><strong>The King (👑):</strong> Majestic but steady. Moves up to 2 squares in any direction.</li>
+      <li><strong>The Soldier (🛡️):</strong> Moves up to 1 square forward.</li>
+      <li><strong>The Car (🏎️):</strong> High speed! Moves up to 5 squares. 💨</li>
+      <li><strong>The Minister (🕌):</strong> Spiritual powerhouse. Moves up to 6 squares vertically/horizontally.</li>
+      <li><strong>The King (👑):</strong> Majestic. Moves up to 2 squares in any direction.</li>
+      <li><strong>The Horse (🐎):</strong> Infinite Galloper! (Unlimited range in this version).</li>
     </ul>
   </div>
 
-  <scriptlet selectedSquare = null;
+  <script>
+let selectedSquare = null;
 let currentTurn = 'orange';
 let gameActive = true;
-let moveHistory = [];
 
 const orangeTeam = ['👑', '🛡️', '🕌', '🏎️', '🐎', '🏇', '💎'];
 const brownTeam  = ['🤴', '💂', '🕍', '🚙', '🦄', '🏇', '💠'];
 
-// Initial Game Setup
 let gameState = Array(10).fill(null).map(() => Array(10).fill(' '));
 gameState[0] = ['🚙', ' ', ' ', '🕍', '🤴', '🦄', ' ', ' ', ' ', '🚙'];
 gameState[1] = Array(10).fill('💂');
 gameState[9] = ['🏎️', ' ', ' ', '🕌', '👑', '🐎', ' ', ' ', ' ', '🏎️'];
 gameState[8] = Array(10).fill('🛡️');
 
-// --- STALEMATE SCANNER ---
 function canPlayerMove(playerColor) {
     const team = (playerColor === 'orange') ? orangeTeam : brownTeam;
     for (let r = 0; r < 10; r++) {
@@ -97,11 +112,9 @@ function handleSquareClick(row, col) {
     const piece = gameState[row][col];
     
     if (!selectedSquare) {
-        // Only allow clicking pieces belonging to the current player
         if (piece === ' ') return;
         if (currentTurn === 'orange' && !orangeTeam.includes(piece)) return;
         if (currentTurn === 'brown' && !brownTeam.includes(piece)) return;
-        
         selectedSquare = { row, col };
         drawBoard();
     } else {
@@ -123,37 +136,38 @@ function isValidMove(fR, fC, tR, tC) {
         (currentTurn === 'brown' && brownTeam.includes(target)) || 
         (fR === tR && fC === tC)) return false;
 
-    // Movement Rules
+    // RULE UPDATES based on your "Revolutionary Rules":
+    // Soldier
     if (piece === '🛡️' || piece === '💂') return dc === 0 && dr === 1;
-    if (piece === '👑' || piece === '🤴') return (dr <= 1 && dc <= 1);
-    if (piece === '🏎️' || piece === '🚙') return (dr <= 2 && dc <= 2);
-    if (piece === '🕌' || piece === '🕍') return ((dr <= 5 && dc === 0) || (dr === 0 && dc <= 5));
-    if (piece === '🐎' || piece === '🦄') return (dr <= 1 && dc <= 1);
+    // King (Moves up to 2 squares)
+    if (piece === '👑' || piece === '🤴') return (dr <= 2 && dc <= 2);
+    // Car (Moves up to 5 squares)
+    if (piece === '🏎️' || piece === '🚙') return (dr <= 5 && dc <= 5);
+    // Minister (Moves up to 6 squares)
+    if (piece === '🕌' || piece === '🕍') return ((dr <= 6 && dc === 0) || (dr === 0 && dc <= 6));
+    // Horse (Infinite Galloper)
+    if (piece === '🐎' || piece === '🦄') return (dr > 0 || dc > 0);
+    
     return false;
 }
 
 function executeMove(row, col) {
     const fromRow = selectedSquare.row, fromCol = selectedSquare.col;
     const movingPiece = gameState[fromRow][fromCol], pieceOnTarget = gameState[row][col];
-    const statusDisplay = document.getElementById('status');
 
-    // Win Condition: Capture King
     if (pieceOnTarget === '👑' || pieceOnTarget === '🤴') {
-       endGame(`${currentTurn.toUpperCase()} wins by capturing the King!`, "lime");
+       endGame(`FALLMATE! ${currentTurn.toUpperCase()} wins! 👑🏆`, "lime");
     }
 
     gameState[row][col] = movingPiece;
     gameState[fromRow][fromCol] = ' ';
     
     if (gameActive) {
-        // Toggle Turn
         currentTurn = (currentTurn === 'orange') ? 'brown' : 'orange';
-        
-        // Stalemate Check: If the NEW current player has no moves, it's a draw.
         if (!canPlayerMove(currentTurn)) {
-            endGame("Stalemate! No legal moves for " + currentTurn, "cyan");
+            endGame("Stalemate! No legal moves left.", "cyan");
         } else {
-            statusDisplay.innerText = `${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}'s Turn`;
+            document.getElementById('status').innerText = `${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}'s Turn`;
         }
     }
     
@@ -162,6 +176,6 @@ function executeMove(row, col) {
 }
 
 drawBoard();
-</script>
+  </script>
 </body>
-</html> 
+</html>
