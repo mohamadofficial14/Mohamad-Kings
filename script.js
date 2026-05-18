@@ -63,7 +63,7 @@ document.getElementById('resign-btn').onclick = () => {
     if (!gameActive) return;
     gameActive = false;
     const statusDisplay = document.getElementById('status');
-    statusDisplay.innerText = "Brown won by: Abdication.";
+    statusDisplay.innerText = "Brown won by: Abdication";
     statusDisplay.style.color = "red";
 };
 
@@ -160,7 +160,7 @@ function executeMove(row, col) {
                }
            }
        } else {
-           statusDisplay.innerText = `You won: by King capture. `;
+           statusDisplay.innerText = `You won! By king capture`;
            statusDisplay.style.color = "orange";
            
            for (let r = 0; r < 10; r++) {
