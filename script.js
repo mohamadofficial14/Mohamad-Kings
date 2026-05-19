@@ -62,6 +62,19 @@ function checkInsufficientMaterial() {
 document.getElementById('resign-btn').onclick = () => {
     if (!gameActive) return;
     gameActive = false;
+    
+    // Find the orange king and change him to a white flag
+    for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+            if (gameState[r][c] === '👑') {
+                gameState[r][c] = '🏳️';
+            }
+        }
+    }
+    
+    // Update visual board state
+    drawBoard();
+
     const statusDisplay = document.getElementById('status');
     statusDisplay.innerText = "Brown won by: Abdication";
     statusDisplay.style.color = "red";
@@ -153,7 +166,7 @@ function executeMove(row, col) {
            setTimeout(() => botSpeak("You make losing look so good!"), 3500);
 
            for (let r = 0; r < 10; r++) {
-               for (let c = 0; c < 10; c++) {
+               for (let c = 0; r < 10; c++) {
                    if (orangeTeam.includes(gameState[r][c])) {
                        gameState[r][c] = ' ';
                    }
